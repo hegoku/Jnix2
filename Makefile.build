@@ -1,0 +1,53 @@
+AS = i386-elf-as
+CC = i386-elf-gcc
+LD = i386-elf-ld
+AR = i386-elf-ar
+OBJCOPY = i386-elf-objcopy
+KBUILD_CFLAGS = -c -nostdlib -fno-builtin -I ./include -I ./$(obj)/include -I ./$(obj)/../include -I ./arch/$(ARCH)/include
+
+src = $(obj)
+
+obj-y :=
+lib-y :=
+
+kbuild-dir := $(if $(filter /%,$(src)),$(src),$(srctree)/$(src))
+kbuild-file := $(if $(wildcard $(kbuild-dir)/Kbuild),$(kbuild-dir)/Kbuild,$(kbuild-dir)/Makefile)
+include $(kbuild-file)
+
+__subdir-y	:= $(patsubst %/,%,$(filter %/, $(obj-y)))
+subdir-y	+= $(__subdir-y)
+__subdir-m	:= $(patsubst %/,%,$(filter %/, $(obj-m)))
+subdir-m	+= $(__subdir-m)
+obj-y		:= $(patsubst %/, %/built-in.o, $(obj-y))
+obj-m		:= $(filter-out %/, $(obj-m))
+# Subdirectories we need to descend into
+subdir-ym	:= $(sort $(subdir-y) $(subdir-m))
+
+#quiet_cmd_link_o_target = LD      $@
+# If the list of objects to link is empty, just create an empty built-in.o
+#cmd_link_o_target = $(if $(strip $(obj-y)),\
+#		      $(LD) $(ld_flags) -r -o $@ $(filter $(obj-y), $^) \
+#		      $(cmd_secanalysis),\
+#		      rm -f $@; $(AR) rcs$(KBUILD_ARFLAGS) $@)
+#$(builtin-target): $(obj-y) FORCE
+#	$(call if_changed,link_o_target)
+
+#obj-y := $(addprefix $(output_dir)/, $(obj-y))
+
+$(output_dir)/%.o : $(obj)/%.c 
+	$(CC) $(KBUILD_CFLAGS) $< -o $@
+
+slash_obj := $(subst /,_,$(obj))
+$(output_dir)/$(slash_obj)_build-in.o: $(obj-y)
+	$(LD) -r $(obj-y) -o $@
+
+.PHONY = $(subdir-ym) $(builtin-target)
+$(subdir-ym):
+	$(Q)$(MAKE) $(build)=$@
+
+#include $(obj)/Makefile
+
+
+
+#src := $(wildcard *.c)
+#obj := $(patsubst %.c,%.o,$(src))
