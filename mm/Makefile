@@ -1,4 +1,4 @@
-obj-y := memblock.o
+obj-y := memblock.o mm.o
 obj-y := $(addprefix $(output_dir)/, $(obj-y))
 
 

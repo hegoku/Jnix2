@@ -8,6 +8,7 @@
 #include <asm/setup.h>
 #include <asm/e820/api.h>
 #include <mm/memblock.h>
+#include <asm/page.h>
 
 /*
  * max_low_pfn_mapped: highest directly mapped pfn < 4 GB
@@ -122,12 +123,18 @@ void * __init extend_brk(size_t size, size_t align)
 void __init setup_arch(char **cmdline_p)
 {
 	sanitize_e820_map();
-	reserve_brk_print();
-	extend_brk(6*6*4096, PAGE_SIZE);
-	reserve_brk_print();
-	printk("max_pfn_mapped:%d\n", max_pfn_mapped);
+	max_pfn = e820_end_of_ram_pfn();
 
 	reserve_brk();
+	reserve_brk_print();
+	printk("max_pfn_mapped:%d max_pfn:%d\n", max_pfn_mapped, max_pfn);
+
 	e820__memblock_setup();
+	memblock_reserve(0xA000, 0xF6000); //video
+	memblock_reserve(0x10000, __pa(_end)-0x10000); //kernel
 	memblock_print();
+
+	init_page();
+	memblock_print();
+
 }

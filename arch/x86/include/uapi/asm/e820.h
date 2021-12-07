@@ -81,6 +81,7 @@ struct e820map {
 #define BIOS_ROM_END		0xffffffff
 
 extern int sanitize_e820_map();
+extern unsigned long e820_end_of_ram_pfn(void);
 
 #endif /* __ASSEMBLY__ */
 

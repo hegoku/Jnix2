@@ -43,6 +43,9 @@ struct memblock {
 };
 
 extern struct memblock memblock;
+extern unsigned long max_low_pfn;
+extern unsigned long min_low_pfn;
+extern unsigned long max_pfn;
 
 static inline __init_memblock int memblock_bottom_up(void)
 {
@@ -100,6 +103,13 @@ int memblock_add(phys_addr_t base, phys_addr_t size);
 int memblock_remove(phys_addr_t base, phys_addr_t size);
 int memblock_phys_free(phys_addr_t base, phys_addr_t size);
 int memblock_reserve(phys_addr_t base, phys_addr_t size);
+void *memblock_alloc(phys_addr_t size, phys_addr_t align);
+void memblock_free(void *ptr, size_t size);
+phys_addr_t memblock_find_in_range(phys_addr_t start, phys_addr_t end, phys_addr_t size, phys_addr_t align);
+phys_addr_t memblock_alloc_range_nid(phys_addr_t size,
+					phys_addr_t align, phys_addr_t start,
+					phys_addr_t end, int nid,
+					int exact_nid);
 
 void memblock_print();
 #endif

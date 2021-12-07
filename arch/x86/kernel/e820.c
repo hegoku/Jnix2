@@ -6,6 +6,8 @@
 #include <asm/e820/api.h>
 #include <mm/memblock.h>
 
+#define MAX_ARCH_PFN		(1ULL<<(32-PAGE_SHIFT))
+
 struct change_member {
 	/* Pointer to the original entry: */
 	// struct e820_entry	*entry;
@@ -145,14 +147,54 @@ void __init e820__memblock_setup(void)
         // if (end != (resource_size_t)end)
             // continue;
 
-        if (ei->type != E820_RAM && ei->type != E820_RESERVED_KERN)
-            continue;
-
-        memblock_add(ei->addr, ei->size);
+        if (ei->type != E820_RAM && ei->type != E820_RESERVED_KERN) {
+			memblock_reserve(ei->addr, ei->size);
+		} else {
+			memblock_add(ei->addr, ei->size);
+		}
     }
 
     /* throw away partial pages */
     // memblock_trim_memory(PAGE_SIZE);
 
     // memblock_dump_all();
+}
+
+static unsigned long __init e820_end_pfn(unsigned long limit_pfn, unsigned type)
+{
+	int i;
+	unsigned long last_pfn = 0;
+	unsigned long max_arch_pfn = MAX_ARCH_PFN;
+
+	for (i = 0; i < boot_params.e820_entries; i++) {
+		struct boot_e820_entry *ei = &boot_params.e820_table[i];
+		unsigned long start_pfn;
+		unsigned long end_pfn;
+
+		if (ei->type != type)
+			continue;
+
+		start_pfn = ei->addr >> PAGE_SHIFT;
+		end_pfn = (ei->addr + ei->size) >> PAGE_SHIFT;
+
+		if (start_pfn >= limit_pfn)
+			continue;
+		if (end_pfn > limit_pfn) {
+			last_pfn = limit_pfn;
+			break;
+		}
+		if (end_pfn > last_pfn)
+			last_pfn = end_pfn;
+	}
+
+	if (last_pfn > max_arch_pfn)
+		last_pfn = max_arch_pfn;
+
+	printk("e820: last_pfn = %d max_arch_pfn = %d\n", last_pfn, max_arch_pfn);
+	return last_pfn;
+}
+
+unsigned long __init e820_end_of_ram_pfn(void)
+{
+	return e820_end_pfn(MAX_ARCH_PFN, E820_RAM);
 }

@@ -36,7 +36,7 @@ struct memblock memblock __initdata_memblock = {
 	.reserved.max		= INIT_MEMBLOCK_RESERVED_REGIONS,
 	.reserved.name		= "reserved",
 
-	.bottom_up		= 0,
+	.bottom_up		= 1,
 	.current_limit		= MEMBLOCK_ALLOC_ANYWHERE,
 };
 
@@ -592,7 +592,7 @@ done:
 	return found;
 }
 
-static __init_memblock void *memblock_alloc(phys_addr_t size, phys_addr_t align)
+__init_memblock void *memblock_alloc(phys_addr_t size, phys_addr_t align)
 {
 	void *ptr;
 	ptr = memblock_alloc_range_nid(size, align,
@@ -615,6 +615,27 @@ void __init_memblock memblock_free(void *ptr, size_t size)
 		memblock_phys_free(__pa(ptr), size);
 }
 
+phys_addr_t __init_memblock memblock_find_in_range(phys_addr_t start,
+					phys_addr_t end, phys_addr_t size,
+					phys_addr_t align)
+{
+	phys_addr_t ret;
+	enum memblock_flags flags = choose_memblock_flags();
+
+again:
+	ret = memblock_find_in_range_node(size, align, start, end,
+					    0, flags);
+
+	if (!ret && (flags & MEMBLOCK_MIRROR)) {
+		printk("Could not allocate %pap bytes of mirrored memory\n",
+			&size);
+		flags &= ~MEMBLOCK_MIRROR;
+		goto again;
+	}
+
+	return ret;
+}
+
 void memblock_print()
 {
 	int idx;
@@ -629,7 +650,7 @@ void memblock_print()
 
 	for_each_memblock_type(idx, (&memblock.reserved), rgn) {
 		phys_addr_t rbase = rgn->base;
-		phys_addr_t rend = rbase + rgn->size;
+		phys_addr_t rend = rbase + rgn->size -1;
 
 		printk("memblock-reserved: [%#010x - %#010x]\n", rbase, rend);
 	}

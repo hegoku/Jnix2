@@ -55,6 +55,8 @@
 #define __va(x)			((void *)((unsigned long)(x)+PAGE_OFFSET))
 #endif
 
+#define PTRS_PER_PGD 1024
+
 typedef unsigned long	pteval_t;
 typedef unsigned long	pmdval_t;
 typedef unsigned long	pudval_t;
@@ -73,6 +75,8 @@ extern pgd_t swapper_pg_dir[1024];
 
 extern unsigned long max_low_pfn_mapped;
 extern unsigned long max_pfn_mapped;
+
+void init_page();
 #endif /* __ASSEMBLER__ */
 
 #endif /*_ASM_X86_PAGE_H*/
