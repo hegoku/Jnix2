@@ -44,7 +44,7 @@ clean:
 	rm build/*
 
 run:
-	qemu-system-i386 -s -m 4G  -kernel build/bzimage
+	qemu-system-i386 -s -m 1G  -kernel build/bzimage
 
 map:
 	i386-elf-nm -n build/kernel.elf | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)\|\( .L\)' > System.map

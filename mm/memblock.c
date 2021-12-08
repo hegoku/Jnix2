@@ -9,12 +9,6 @@
 
 #include <asm/page.h>
 
-#define min(a,b) (a>b?b:a)
-#define max(a,b) (a>b?a:b)
-#define min_t(type, a, b) min(((type) a), ((type) b))
-#define max_t(type, a, b) max(((type) a), ((type) b))
-#define clamp(val, lo, hi) min((typeof(val))max(val, lo), hi)
-
 #define INIT_MEMBLOCK_REGIONS			128
 #define INIT_MEMBLOCK_RESERVED_REGIONS		INIT_MEMBLOCK_REGIONS
 
@@ -645,13 +639,13 @@ void memblock_print()
 		phys_addr_t rbase = rgn->base;
 		phys_addr_t rend = rbase + rgn->size;
 
-		printk("memblock-memory: [%#010x - %#010x]\n", rbase, rend);
+		printk("memblock-memory: [%#010x - %#010x] %d - %d\n", rbase, rend, rbase>>PAGE_SHIFT, rend>>PAGE_SHIFT);
 	}
 
 	for_each_memblock_type(idx, (&memblock.reserved), rgn) {
 		phys_addr_t rbase = rgn->base;
 		phys_addr_t rend = rbase + rgn->size -1;
 
-		printk("memblock-reserved: [%#010x - %#010x]\n", rbase, rend);
+		printk("memblock-reserved: [%#010x - %#010x] %d - %d\n", rbase, rend, rbase>>PAGE_SHIFT, rend>>PAGE_SHIFT);
 	}
 }

@@ -3,6 +3,7 @@
 
 #include <jnix/init.h>
 #include <jnix/types.h>
+#include <jnix/limits.h>
 
 #define __init_memblock __meminit
 #define __initdata_memblock __meminitdata
@@ -12,6 +13,12 @@
 #define MEMBLOCK_ALLOC_NOLEAKTRACE	1
 
 #define MEMBLOCK_LOW_LIMIT 0
+
+#define min(a,b) (a>b?b:a)
+#define max(a,b) (a>b?a:b)
+#define min_t(type, a, b) min(((type) a), ((type) b))
+#define max_t(type, a, b) max(((type) a), ((type) b))
+#define clamp(val, lo, hi) min((typeof(val))max(val, lo), hi)
 
 enum memblock_flags {
 	MEMBLOCK_NONE		= 0x0,	/* No special request */
