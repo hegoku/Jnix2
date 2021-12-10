@@ -4,10 +4,10 @@
 
 boot := arch/x86/boot
 kernel := arch/x86/kernel
-mm := arch/x86/mm
-lib := arch/x86/lib
+# mm := arch/x86/mm
+# # lib := arch/x86/lib
 
-core-y += arch/x86/mm/ 
+core-y += arch/x86/mm/ arch/x86/entry/
 
 # all : bzImage
 

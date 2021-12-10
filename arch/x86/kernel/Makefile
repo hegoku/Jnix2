@@ -2,7 +2,7 @@ ASFLAGS := $(KBUILD_CFLAGS)
 
 # all: kernel
 
-obj-y := head_32.o setup.o head32.o idt.o e820.o early_printk.o
+obj-y := head_32.o setup.o head32.o idt.o e820.o early_printk.o fault.o
 obj-y := $(addprefix $(output_dir)/, $(obj-y))
 # kernel: $(output_dir)/kernel.bin
 

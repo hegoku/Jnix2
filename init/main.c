@@ -87,6 +87,9 @@ __attribute__((regparm(0))) void __init __attribute__((no_sanitize_address)) sta
 
 	do_basic_setup();
 
+	int *a = 100;
+	*a = 0x98;
+	printk("done!\n");
 	for (;;)
 	{
 	}

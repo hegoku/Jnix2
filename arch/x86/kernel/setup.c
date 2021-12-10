@@ -142,4 +142,5 @@ void __init setup_arch(char **cmdline_p)
 
 	init_bucket_desc();
 
+	idt_setup_traps();
 }

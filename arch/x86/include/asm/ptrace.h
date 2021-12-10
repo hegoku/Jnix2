@@ -1,6 +1,30 @@
 #ifndef _ASM_X86_PTRACE_H
 #define _ASM_X86_PTRACE_H
 
+#define PT_BX 0
+#define PT_CX 4
+#define PT_DX 8
+#define PT_SI 12
+#define PT_DI 16
+#define PT_DP 20
+#define PT_AX 24
+#define PT_DS 28
+#define PT_DSH 30
+#define PT_ES 32
+#define PT_ESH 34
+#define PT_FS 36
+#define PT_FSH 36
+#define PT_GS 40
+#define PT_GSH 42
+#define PT_ORIG_EAX 44
+#define PT_IP 48
+#define PT_CS 52
+#define PT_CSH 54
+#define PT_FLAGS 56
+#define PT_SP 60
+#define PT_SS 64
+#define PT_SSH 66
+
 #ifndef __ASSEMBLER__
 
 struct pt_regs {

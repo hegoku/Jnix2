@@ -4,8 +4,43 @@
 #include <asm/desc.h>
 #include <asm/desc_defs.h>
 #include <asm/page.h>
+#include <asm/trapnr.h>
+#include <asm/fault.h>
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
 #define IDT_TABLE_SIZE		(IDT_ENTRIES * sizeof(gate_desc))
+
+#define DPL0		0x0
+#define DPL3		0x3
+
+#define DEFAULT_STACK	0
+
+#define G(_vector, _addr, _ist, _type, _dpl, _segment)	\
+	{						\
+		.vector		= _vector,		\
+		.bits.ist	= _ist,			\
+		.bits.type	= _type,		\
+		.bits.dpl	= _dpl,			\
+		.bits.p		= 1,			\
+		.addr		= _addr,		\
+		.segment	= _segment,		\
+	}
+
+/* Interrupt gate */
+#define INTG(_vector, _addr)				\
+	G(_vector, _addr, DEFAULT_STACK, GATE_INTERRUPT, DPL0, __KERNEL_CS)
+
+/* System interrupt gate */
+#define SYSG(_vector, _addr)				\
+	G(_vector, _addr, DEFAULT_STACK, GATE_INTERRUPT, DPL3, __KERNEL_CS)
+
+#define TSKG(_vector, _gdt)				\
+	G(_vector, NULL, DEFAULT_STACK, GATE_TASK, DPL0, _gdt << 3)
+
+static const __initconst struct idt_data def_idts[] = {
+	INTG(X86_TRAP_PF,		asm_exc_page_fault),
+};
 
 /* Must be page-aligned because the real IDT is used in the cpu entry area */
 static gate_desc idt_table[IDT_ENTRIES] __attribute__ ((section(".bss..page_aligned"))) __attribute__((aligned(PAGE_SIZE)));
@@ -49,4 +84,9 @@ void __init idt_setup_early_handler(void)
 	for ( ; i < NR_VECTORS; i++)
 		set_intr_gate(i, early_ignore_irq);
 	load_idt(&idt_descr);
+}
+
+void __init idt_setup_traps(void)
+{
+	idt_setup_from_table(idt_table, def_idts, ARRAY_SIZE(def_idts), 1);
 }
