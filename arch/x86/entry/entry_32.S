@@ -1,6 +1,9 @@
 #include <asm/ptrace.h>
 #include <asm/segment.h>
 #include <asm/trapnr.h>
+#include <asm/page.h>
+
+#define PTI_SWITCH_MASK         (1 << PAGE_SHIFT)
 
 #define CS_FROM_ENTRY_STACK	(1 << 31)
 #define CS_FROM_USER_CR3	(1 << 30)
@@ -102,6 +105,140 @@
 #.endif
 .endm
 
+.macro PARANOID_EXIT_TO_KERNEL_MODE
+
+	/*
+	 * Test if we entered the kernel with the entry-stack. Most
+	 * likely we did not, because this code only runs on the
+	 * return-to-kernel path.
+	 */
+	testl	$CS_FROM_ENTRY_STACK, PT_CS(%esp)
+	jz	.Lend_\@
+
+	/* Unlikely slow-path */
+
+	/* Clear marker from stack-frame */
+	andl	$(~CS_FROM_ENTRY_STACK), PT_CS(%esp)
+
+	/* Copy the remaining task-stack contents to entry-stack */
+	movl	%esp, %esi
+	movl	cpu_tss_rw + TSS_sp0, %edi
+
+	/* Bytes on the task-stack to ecx */
+	movl	cpu_tss_rw + TSS_sp1, %ecx
+	subl	%esi, %ecx
+
+	/* Allocate stack-frame on entry-stack */
+	subl	%ecx, %edi
+
+	/*
+	 * Save future stack-pointer, we must not switch until the
+	 * copy is done, otherwise the NMI handler could destroy the
+	 * contents of the task-stack we are about to copy.
+	 */
+	movl	%edi, %ebx
+
+	/* Do the copy */
+	shrl	$2, %ecx
+	cld
+	rep movsl
+
+	/* Safe to switch to entry-stack now */
+	movl	%ebx, %esp
+
+	/*
+	 * We came from entry-stack and need to check if we also need to
+	 * switch back to user cr3.
+	 */
+	testl	$CS_FROM_USER_CR3, PT_CS(%esp)
+	jz	.Lend_\@
+
+	/* Clear marker from stack-frame */
+	andl	$(~CS_FROM_USER_CR3), PT_CS(%esp)
+
+	SWITCH_TO_USER_CR3 scratch_reg=%eax
+
+.Lend_\@:
+.endm
+
+.macro SWITCH_TO_USER_CR3 scratch_reg:req
+#	ALTERNATIVE "jmp .Lend_\@", "", X86_FEATURE_PTI
+
+	movl	%cr3, \scratch_reg
+	orl	$PTI_SWITCH_MASK, \scratch_reg
+	movl	\scratch_reg, %cr3
+.Lend_\@:
+.endm
+
+.macro RESTORE_INT_REGS
+	popl	%ebx
+	popl	%ecx
+	popl	%edx
+	popl	%esi
+	popl	%edi
+	popl	%ebp
+	popl	%eax
+.endm
+
+.macro RESTORE_REGS pop=0
+	RESTORE_INT_REGS
+1:	popl	%ds
+2:	popl	%es
+3:	popl	%fs
+	addl	$(4 + \pop), %esp	/* pop the unused "gs" slot */
+	IRET_FRAME
+#.pushsection .fixup, "ax"
+#4:	movl	$0, (%esp)
+#	jmp	1b
+#5:	movl	$0, (%esp)
+#	jmp	2b
+#6:	movl	$0, (%esp)
+#	jmp	3b
+#.popsection
+#	_ASM_EXTABLE(1b, 4b)
+#	_ASM_EXTABLE(2b, 5b)
+#	_ASM_EXTABLE(3b, 6b)
+.endm
+
+.macro IRET_FRAME
+	/*
+	 * We're called with %ds, %es, %fs, and %gs from the interrupted
+	 * frame, so we shouldn't use them.  Also, we may be in ESPFIX
+	 * mode and therefore have a nonzero SS base and an offset ESP,
+	 * so any attempt to access the stack needs to use SS.  (except for
+	 * accesses through %esp, which automatically use SS.)
+	 */
+	testl $CS_FROM_KERNEL, 1*4(%esp)
+	jz .Lfinished_frame_\@
+
+	/*
+	 * Reconstruct the 3 entry IRET frame right after the (modified)
+	 * regs->sp without lowering %esp in between, such that an NMI in the
+	 * middle doesn't scribble our stack.
+	 */
+	pushl	%eax
+	pushl	%ecx
+	movl	5*4(%esp), %eax		# (modified) regs->sp
+
+	movl	4*4(%esp), %ecx		# flags
+	movl	%ecx, %ss:-1*4(%eax)
+
+	movl	3*4(%esp), %ecx		# cs
+	andl	$0x0000ffff, %ecx
+	movl	%ecx, %ss:-2*4(%eax)
+
+	movl	2*4(%esp), %ecx		# ip
+	movl	%ecx, %ss:-3*4(%eax)
+
+	movl	1*4(%esp), %ecx		# eax
+	movl	%ecx, %ss:-4*4(%eax)
+
+	popl	%ecx
+	lea	-4*4(%eax), %esp
+	popl	%eax
+.Lfinished_frame_\@:
+.endm
+
 /**
  * idtentry - Macro to generate entry stubs for simple IDT entries
  * @vector:		Vector number
@@ -142,29 +279,45 @@ handle_exception:
 #	CALL_NOSPEC edi
 	call	*%edi
 
-#handle_exception_return:
+handle_exception_return:
 	/*
 	 * We can be coming here from child spawned by kernel_thread().
 	 */
-#	movl	PT_CS(%esp), %eax
-#	andl	$SEGMENT_RPL_MASK, %eax
+	movl	PT_CS(%esp), %eax
+	andl	$SEGMENT_RPL_MASK, %eax
 
-#	cmpl	$USER_RPL, %eax			# returning to v8086 or userspace ?
-#	jnb	ret_to_user
+	cmpl	$USER_RPL, %eax			# returning to v8086 or userspace ?
+	jnb	ret_to_user
 
 #	PARANOID_EXIT_TO_KERNEL_MODE
 #	BUG_IF_WRONG_CR3
-#	RESTORE_REGS 4
-#	jmp	.Lirq_return
+	RESTORE_REGS 4
+	jmp	.Lirq_return
 
-#ret_to_user:
-#	movl	%esp, %eax
-#	jmp	restore_all_switch_stack
+ret_to_user:
+	movl	%esp, %eax
+	jmp	restore_all_switch_stack
 .type handle_exception, @function;
 .size handle_exception, .-handle_exception
 
+restore_all_switch_stack:
+#	SWITCH_TO_ENTRY_STACK
+#	CHECK_AND_APPLY_ESPFIX
 
+	/* Switch back to user CR3 */
+	SWITCH_TO_USER_CR3 scratch_reg=%eax
 
+#	BUG_IF_WRONG_CR3
+
+	/* Restore user state */
+	RESTORE_REGS pop=4			# skip orig_eax/error_code
+.Lirq_return:
+	/*
+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on IRET core serialization
+	 * when returning from IPI handler and when returning from
+	 * scheduler to user-space.
+	 */
+	iret
 
 ####
 idtentry vector=X86_TRAP_PF asmsym=asm_exc_page_fault cfunc=exc_page_fault has_error_code=1
