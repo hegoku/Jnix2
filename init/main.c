@@ -1,6 +1,12 @@
 #include <jnix/init.h>
 #include <jnix/console.h>
 #include <jnix/printk.h>
+#include <jnix/interrupt.h>
+#include <mm/mm.h>
+#include <mm/memblock.h>
+#include <mm/kmalloc.h>
+
+extern void init_IRQ(void);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
@@ -84,6 +90,13 @@ __attribute__((regparm(0))) void __init __attribute__((no_sanitize_address)) sta
 	console_init();
 
 	setup_arch(&command_line);
+
+	init_mm();
+	memblock_print();
+	init_bucket_desc();
+
+	early_irq_init();
+	init_IRQ();
 
 	do_basic_setup();
 

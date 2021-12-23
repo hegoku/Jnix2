@@ -19,14 +19,17 @@ kbuild-file := $(if $(wildcard $(kbuild-dir)/Kbuild),$(kbuild-dir)/Kbuild,$(kbui
 include $(kbuild-file)
 
 
-#__subdir-y	:= $(patsubst %/,%,$(filter %/, $(obj-y)))
-#subdir-y	+= $(__subdir-y)
+__subdir-y	:= $(patsubst %/,%,$(filter %/, $(obj-y)))
+subdir-y	+= $(__subdir-y)
 #__subdir-m	:= $(patsubst %/,%,$(filter %/, $(obj-m)))
 #subdir-m	+= $(__subdir-m)
-#obj-y		:= $(patsubst %/, %/built-in.o, $(obj-y))
+#obj-y		:= $(patsubst %/, $(slash_obj)_%_build-in.o, $(obj-y))
+obj-y       := $(filter-out %/, $(obj-y))
+#obj-y		:= $(patsubst %/,, $(obj-y))
 #obj-m		:= $(filter-out %/, $(obj-m))
 # Subdirectories we need to descend into
-#subdir-ym	:= $(sort $(subdir-y) $(subdir-m))
+subdir-ym	:= $(sort $(subdir-y) $(subdir-m))
+subdir-target := $(patsubst %, $(output_dir)/$(slash_obj)_%_build-in.o, $(subdir-ym))
 
 #quiet_cmd_link_o_target = LD      $@
 # If the list of objects to link is empty, just create an empty built-in.o
@@ -37,9 +40,9 @@ include $(kbuild-file)
 #$(builtin-target): $(obj-y) FORCE
 #	$(call if_changed,link_o_target)
 
-#obj-y := $(addprefix $(output_dir)/, $(obj-y))
+obj-y := $(addprefix $(output_dir)/, $(obj-y))
 
-$(output_dir)/$(slash_obj)_build-in.o: $(obj-y)
+$(output_dir)/$(slash_obj)_build-in.o: $(obj-y) $(subdir-target) $(kbuild-file)
 	$(LD) -r $(obj-y) -o $@
 
 $(output_dir)/%.o : $(obj)/%.c
@@ -48,8 +51,8 @@ $(output_dir)/%.o : $(obj)/%.c
 $(output_dir)/%.so : $(obj)/%.S
 	$(CC) $(KBUILD_CFLAGS) $< -o $@
 
-#$(subdir-ym):
-#	$(Q)$(MAKE) $(build)=$@
+$(output_dir)/$(slash_obj)_%_build-in.o: 
+	for dir in $(subdir-ym); do $(MAKE) $(build)=$(slash_obj)/$$dir; done 
 
 #include $(obj)/Makefile
 

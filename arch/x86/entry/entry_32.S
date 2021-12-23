@@ -2,6 +2,7 @@
 #include <asm/segment.h>
 #include <asm/trapnr.h>
 #include <asm/page.h>
+#include <asm/irq_vectors.h>
 
 #define PTI_SWITCH_MASK         (1 << PAGE_SHIFT)
 
@@ -319,5 +320,24 @@ restore_all_switch_stack:
 	 */
 	iret
 
+.align 8
+.globl irq_entries_start
+irq_entries_start:
+	vector=FIRST_EXTERNAL_VECTOR
+    .rept NR_EXTERNAL_VECTORS
+#	UNWIND_HINT_IRET_REGS
+0 :
+	.byte	0x6a, vector
+	jmp	asm_common_interrupt
+	nop
+	/* Ensure that the above is 8 bytes max */
+	. = 0b + 8
+	vector = vector+1
+    .endr
+.type irq_entries_start, @function;
+.size irq_entries_start, .-irq_entries_start
+
 ####
 idtentry vector=X86_TRAP_PF asmsym=asm_exc_page_fault cfunc=exc_page_fault has_error_code=1
+
+idtentry vector=0xFFFF asmsym=asm_common_interrupt cfunc=common_interrupt has_error_code=1

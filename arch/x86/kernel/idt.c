@@ -6,6 +6,8 @@
 #include <asm/page.h>
 #include <asm/trapnr.h>
 #include <asm/fault.h>
+#include <asm/hw_irq.h>
+#include <asm/desc.h>
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
@@ -89,4 +91,23 @@ void __init idt_setup_early_handler(void)
 void __init idt_setup_traps(void)
 {
 	idt_setup_from_table(idt_table, def_idts, ARRAY_SIZE(def_idts), 1);
+}
+
+void __init idt_setup_apic_and_irq_gates(void)
+{
+	int i;
+	void *entry;
+
+	// idt_setup_from_table(idt_table, apic_idts, ARRAY_SIZE(apic_idts), 1);
+
+	for (i=FIRST_EXTERNAL_VECTOR; i<FIRST_SYSTEM_VECTOR; i++) {
+		entry = irq_entries_start + 8 * (i - FIRST_EXTERNAL_VECTOR);
+		set_intr_gate(i, entry);
+	}
+	// for_each_clear_bit_from(i, system_vectors, FIRST_SYSTEM_VECTOR) {
+	// 	entry = irq_entries_start + 8 * (i - FIRST_EXTERNAL_VECTOR);
+	// 	set_intr_gate(i, entry);
+	// }
+
+	load_idt(&idt_descr);
 }

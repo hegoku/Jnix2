@@ -11,6 +11,7 @@
 #include <asm/page.h>
 #include <mm/kmalloc.h>
 #include <mm/mm.h>
+#include <asm/irq.h>
 
 /*
  * max_low_pfn_mapped: highest directly mapped pfn < 4 GB
@@ -137,10 +138,6 @@ void __init setup_arch(char **cmdline_p)
 	memblock_print();
 
 	init_page();
-	init_mm();
-	memblock_print();
-
-	init_bucket_desc();
 
 	idt_setup_traps();
 }

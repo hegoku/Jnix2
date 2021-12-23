@@ -1,7 +1,7 @@
 ARCH = x86
 MAKE = make
 
-export ARCH
+export ARCH MAKE
 
 this-makefile := $(lastword $(MAKEFILE_LIST))
 abs_srctree := $(realpath $(dir $(this-makefile)))
@@ -12,6 +12,7 @@ export srctree
 
 output_dir = $(srctree)/build
 build := -f $(srctree)/Makefile.build output_dir="$(output_dir)" obj
+export build
 
 include $(srctree)/arch/$(ARCH)/Makefile
 

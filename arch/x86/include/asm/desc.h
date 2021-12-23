@@ -20,7 +20,9 @@ struct gdt_page {
 extern void idt_setup_early_handler(void);
 extern unsigned long system_vectors[];
 extern void idt_setup_traps(void);
+extern void idt_setup_apic_and_irq_gates(void);
 
+extern unsigned long system_vectors[];
 
 static inline void idt_init_desc(gate_desc *gate, const struct idt_data *d)
 {

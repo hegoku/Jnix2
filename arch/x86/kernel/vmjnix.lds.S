@@ -8,6 +8,8 @@ THREAD_SIZE = 1024*8;
 OUTPUT_ARCH(i386)
 ENTRY(phys_startup_32)
 
+jiffies = jiffies_64;
+
 PHDRS {
 	text PT_LOAD FLAGS(5);          /* R_E */
 	data PT_LOAD FLAGS(6);          /* RW_ */
