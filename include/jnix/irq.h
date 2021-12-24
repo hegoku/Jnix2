@@ -1,6 +1,7 @@
 #ifndef JNIX_IRQ_H
 #define JNIX_IRQ_H
 
+#include <jnix/irqreturn.h>
 #include <asm/irq.h>
 
 struct irq_data {
@@ -44,6 +45,8 @@ extern void handle_edge_irq(struct irq_desc *desc);
 extern void handle_edge_eoi_irq(struct irq_desc *desc);
 extern void handle_simple_irq(struct irq_desc *desc);
 extern void handle_bad_irq(struct irq_desc *desc);
+
+extern irqreturn_t no_action(int cpl, void *dev_id);
 
 extern int irq_set_chip(unsigned int irq, struct irq_chip *chip);
 extern void __irq_set_handler(unsigned int irq, irq_flow_handler_t handle, int is_chained, const char *name);

@@ -1,10 +1,17 @@
 #include <jnix/irqdesc.h>
 #include <jnix/printk.h>
 
+#include <jnix/interrupt.h>
+
 void handle_bad_irq(struct irq_desc *desc)
 {
 	int irq = irq_desc_get_irq(desc);
 	printk("irq:%#x\n", irq);
+}
+
+irqreturn_t no_action(int cpl, void *dev_id)
+{
+	return IRQ_NONE;
 }
 
 irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
@@ -31,7 +38,7 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 			    //   irq, action->handler))
 			// local_irq_disable();
 
-		// switch (res) {
+		switch (res) {
 		// case IRQ_WAKE_THREAD:
 		// 	/*
 		// 	 * Catch drivers which return WAKE_THREAD but
@@ -45,13 +52,13 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 		// 	__irq_wake_thread(desc, action);
 
 		// 	fallthrough;	/* to add to randomness */
-		// case IRQ_HANDLED:
+		case IRQ_HANDLED:
 		// 	*flags |= action->flags;
-		// 	break;
+			break;
 
-		// default:
-		// 	break;
-		// }
+		default:
+			break;
+		}
 
 		retval |= res;
 	}
