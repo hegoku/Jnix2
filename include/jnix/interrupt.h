@@ -24,4 +24,6 @@ extern int early_irq_init(void);
 // extern int arch_probe_nr_irqs(void);
 // extern int arch_early_irq_init(void);
 
+extern int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags, const char *name, void *dev);
+
 #endif

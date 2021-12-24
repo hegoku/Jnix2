@@ -1,9 +1,20 @@
 #include <jnix/irq.h>
 #include <jnix/interrupt.h>
+#include <jnix/irqnr.h>
 #include <mm/kmalloc.h>
 
 static int __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
 {
+	if (!desc)
+		return -1;
+
+	if (desc->irq_data.chip == &no_irq_chip)
+		return -1;
+
+	new->irq = irq;
+
+	new->next = desc->action->next;
+	desc->action->next = new;
 }
 
 int request_irq(unsigned int irq, irq_handler_t handler, unsigned long irqflags,
@@ -37,7 +48,7 @@ int request_irq(unsigned int irq, irq_handler_t handler, unsigned long irqflags,
 
 	desc = irq_to_desc(irq);
 	if (!desc)
-		return NULL;
+		return -1;
 		// return -EINVAL;
 
 	// if (!irq_settings_can_request(desc) ||
@@ -50,9 +61,9 @@ int request_irq(unsigned int irq, irq_handler_t handler, unsigned long irqflags,
 		// handler = irq_default_primary_handler;
 	}
 
-	action = kzalloc(sizeof(struct irqaction));
+	action = kzmalloc(sizeof(struct irqaction));
 	if (!action)
-		return NULL;
+		return -1;
 		// return -ENOMEM;
 
 	action->handler = handler;
@@ -71,7 +82,7 @@ int request_irq(unsigned int irq, irq_handler_t handler, unsigned long irqflags,
 	if (retval) {
 		// irq_chip_pm_put(&desc->irq_data);
 		// kfree(action->secondary);
-		kfree(action);
+		kfree(action, sizeof(struct irqaction));
 	}
 
 	return retval;
