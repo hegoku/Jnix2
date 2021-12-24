@@ -215,7 +215,7 @@ void kfree(void *obj, unsigned int size)
 found:
     // 找到对应的桶描述符后，首先关中断。然后将该对象内存块链入空闲块对象链表中，
     // 并使该描述符的对象引用计数减1。
-	asm("cli"); /* 为了避免竞争条件 */
+	// asm("cli"); /* 为了避免竞争条件 */
 	*((void **)obj) = bdesc->freeptr;
 	bdesc->freeptr = obj;
 	bdesc->refcnt--;

@@ -22,7 +22,22 @@ static inline void handle_irq(struct irq_desc *desc,
 		__handle_irq(desc, regs);
 }
 
-__attribute__((regparm(3))) void common_interrupt(struct pt_regs *regs, u32 vector)
+static void __common_interrupt(struct pt_regs *regs, u32 vector);
+
+__attribute__((regparm(3))) void common_interrupt(struct pt_regs *regs, unsigned long error_code)
+{
+	// irqentry_state_t state = irqentry_enter(regs);
+	u32 vector = (u32)(u8)error_code;
+
+	// instrumentation_begin();
+	// kvm_set_cpu_l1tf_flush_l1d();
+	__common_interrupt(regs, vector);
+	// run_irq_on_irqstack_cond(__common_interrupt, regs, vector);
+	// instrumentation_end();
+	// irqentry_exit(regs, state);
+}
+
+static void __common_interrupt(struct pt_regs *regs, u32 vector)
 {
 	struct pt_regs *old_regs = set_irq_regs(regs);
 	struct irq_desc *desc;
