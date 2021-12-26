@@ -8,8 +8,8 @@
 #define PIT_CH0		0x40
 #define PIT_CH2		0x42
 
-#define TIMER_FREQ 1193182L
-// #define PIT_LATCH	((PIT_TICK_RATE + HZ/2) / HZ)
+#define PIT_TICK_RATE 1193182L
+#define PIT_LATCH	((PIT_TICK_RATE + HZ/2) / HZ)
 
 extern void setup_pit_timer(void);
 
