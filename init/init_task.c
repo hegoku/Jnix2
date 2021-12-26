@@ -2,6 +2,7 @@
 #include <jnix/mm.h>
 #include <jnix/list.h>
 #include <jnix/sched/task.h>
+#include <jnix/init_task.h>
 
 struct task_struct init_task = {
 	.thread_info = INIT_THREAD_INFO(init_task),
@@ -16,3 +17,5 @@ struct task_struct init_task = {
 	.sibling	= LIST_HEAD_INIT(init_task.sibling),
 	.group_leader	= &init_task,
 };
+
+struct thread_info init_thread_info __init_thread_info = INIT_THREAD_INFO(init_task);
