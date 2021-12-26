@@ -32,4 +32,7 @@ extern void unmask_threaded_irq(struct irq_desc *desc);
 
 extern int irq_startup(struct irq_desc *desc, int resend, int force);
 
+extern void __disable_irq(struct irq_desc *desc);
+extern void __enable_irq(struct irq_desc *desc);
+
 #endif

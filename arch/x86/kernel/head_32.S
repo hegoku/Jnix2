@@ -3,9 +3,11 @@
 #include <jnix/init.h>
 #include <asm/page.h>
 #include <asm/segment.h>
+#include <asm/thread_info.h>
 
 #define pa(X) ((X) - __PAGE_OFFSET)
 #define PARAM_SIZE_UNIT 1024 //PARAM_SIZE/4
+#define SIZEOF_PTREGS 17*4
 
 //.section ".head.text", "ax"
 __HEAD
@@ -191,9 +193,8 @@ swapper_pg_dir:
  */
 .globl initial_stack
 initial_stack:
-	#.long init_thread_union + THREAD_SIZE -
-	#	SIZEOF_PTREGS - TOP_OF_KERNEL_STACK_PADDING)
-	.long init_thread_union
+	.long init_thread_union + THREAD_SIZE - SIZEOF_PTREGS - TOP_OF_KERNEL_STACK_PADDING
+	#.long init_thread_union
 .type initial_stack STT_OBJECT;
 .size initial_stack, .-initial_stack
 

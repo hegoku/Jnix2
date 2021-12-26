@@ -1,6 +1,8 @@
 #ifndef _JNIX_TYPES_H
 #define _JNIX_TYPES_H
 
+#ifndef __ASSEMBLER__
+
 #define u8 unsigned char
 #define u16 unsigned short
 #define u32 unsigned long int
@@ -18,4 +20,7 @@
 typedef unsigned int size_t;
 typedef u32 phys_addr_t;
 
+typedef int pid_t;
+
+#endif /* ASSEMBLER */
 #endif
