@@ -6,6 +6,7 @@
 
 #include <asm/page.h>
 #include <asm/thread_info.h>
+#include <asm/processor.h>
 
 /* Used in tsk->state: */
 #define TASK_RUNNING			0x0000
@@ -52,6 +53,10 @@
 
 #define task_is_stopped_or_traced(task)	((task->__state & (__TASK_STOPPED | __TASK_TRACED)) != 0)
 
+#define get_current_state()	(current->__state)
+
+#define TASK_COMM_LEN			16
+
 struct task_struct {
 	struct thread_info thread_info;
 	unsigned int __state;
@@ -75,21 +80,32 @@ struct task_struct {
 	struct list_head children;
 	struct list_head sibling;
 	struct task_struct *group_leader;
+
+	char comm[TASK_COMM_LEN];
+
+	struct thread_struct thread;
 };
 
 union thread_union {
-	struct task_struct task;
-	struct thread_info thread_info;
 	unsigned long stack[THREAD_SIZE/sizeof(long)];
 };
 
-extern struct thread_info init_thread_info;
+// extern struct thread_info init_thread_info;
+
+# define task_thread_info(task)	(&(task)->thread_info)
 
 extern unsigned long init_stack[THREAD_SIZE / sizeof(unsigned long)];
 
-static inline struct thread_info *task_thread_info(struct task_struct *task)
+extern void __set_task_comm(struct task_struct *tsk, const char *from, int exec);
+
+static inline void set_task_comm(struct task_struct *tsk, const char *from)
 {
-	return &task->thread_info;
+	__set_task_comm(tsk, from, 0);
 }
+
+extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);
+#define get_task_comm(buf, tsk) ({			\
+	__get_task_comm(buf, sizeof(buf), tsk);		\
+})
 
 #endif

@@ -16,7 +16,7 @@ export build
 
 include $(srctree)/arch/$(ARCH)/Makefile
 
-core-y += mm/ init/ lib/ kernel/
+core-y += mm/ init/ lib/ kernel/ fs/
 core-obj := $(addsuffix /%.o,$(core-y))
 
 vmlinux-dirs := $(patsubst %/,%,$(filter %/, \

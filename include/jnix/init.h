@@ -83,7 +83,7 @@
  *
  * The markers follow same syntax rules as __init / __initdata.
  */
-#define __ref            __section(".ref.text") noinline
+#define __ref            __section(".ref.text") __attribute__ ((noinline))
 #define __refdata        __section(".ref.data")
 #define __refconst       __section(".ref.rodata")
 
