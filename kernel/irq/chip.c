@@ -49,6 +49,21 @@ void unmask_irq(struct irq_desc *desc)
 	}
 }
 
+static void cond_unmask_irq(struct irq_desc *desc)
+{
+	/*
+	 * We need to unmask in the following cases:
+	 * - Standard level irq (IRQF_ONESHOT is not set)
+	 * - Oneshot irq which did not wake the thread (caused by a
+	 *   spurious interrupt or a primary handler handling it
+	 *   completely).
+	 */
+	// if (!irqd_irq_disabled(&desc->irq_data) &&
+	    // irqd_irq_masked(&desc->irq_data) && !desc->threads_oneshot)
+		unmask_irq(desc);
+}
+
+
 void handle_level_irq(struct irq_desc *desc)
 {
 	mask_ack_irq(desc);
@@ -73,7 +88,7 @@ void handle_level_irq(struct irq_desc *desc)
 	// // kstat_incr_irqs_this_cpu(desc);
 	handle_irq_event(desc);
 
-	// cond_unmask_irq(desc);
+	cond_unmask_irq(desc);
 
 // out_unlock:
 	// raw_spin_unlock(&desc->lock);
@@ -106,4 +121,93 @@ void irq_set_chip_and_handler_name(unsigned int irq, struct irq_chip *chip,
 {
 	irq_set_chip(irq, chip);
 	__irq_set_handler(irq, handle, 0, name);
+}
+
+static int __irq_startup(struct irq_desc *desc)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
+	int ret = 0;
+	/* Warn if this interrupt is not activated but try nevertheless */
+	// WARN_ON_ONCE(!irqd_is_activated(d));
+
+	if (d->chip->irq_startup) {
+		ret = d->chip->irq_startup(d);
+		// irq_state_clr_disabled(desc);
+		// irq_state_clr_masked(desc);
+	} else {
+		irq_enable(desc);
+	}
+	// irq_state_set_started(desc);
+	return ret;
+}
+
+int irq_startup(struct irq_desc *desc, int resend, int force)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
+	// struct cpumask *aff = irq_data_get_affinity_mask(d);
+	int ret = 0;
+
+	// desc->depth = 0;
+	return __irq_startup(desc);
+	// if (irqd_is_started(d)) {
+	// 	irq_enable(desc);
+	// } else {
+	// 	switch (__irq_startup_managed(desc, aff, force)) {
+	// 	case IRQ_STARTUP_NORMAL:
+	// 		if (d->chip->flags & IRQCHIP_AFFINITY_PRE_STARTUP)
+	// 			irq_setup_affinity(desc);
+	// 		ret = __irq_startup(desc);
+	// 		if (!(d->chip->flags & IRQCHIP_AFFINITY_PRE_STARTUP))
+	// 			irq_setup_affinity(desc);
+	// 		break;
+	// 	case IRQ_STARTUP_MANAGED:
+	// 		irq_do_set_affinity(d, aff, false);
+	// 		ret = __irq_startup(desc);
+	// 		break;
+	// 	case IRQ_STARTUP_ABORT:
+	// 		irqd_set_managed_shutdown(d);
+	// 		return 0;
+	// 	}
+	// }
+	// if (resend)
+	// 	check_irq_resend(desc, false);
+
+	return ret;
+}
+
+void irq_enable(struct irq_desc *desc)
+{
+	// if (!irqd_irq_disabled(&desc->irq_data)) {
+	// 	unmask_irq(desc);
+	// } else {
+	// 	irq_state_clr_disabled(desc);
+		if (desc->irq_data.chip->irq_enable) {
+			desc->irq_data.chip->irq_enable(&desc->irq_data);
+			// irq_state_clr_masked(desc);
+		} else {
+			unmask_irq(desc);
+		}
+	// }
+}
+
+static void __irq_disable(struct irq_desc *desc, int mask)
+{
+	// if (irqd_irq_disabled(&desc->irq_data)) {
+	// 	if (mask)
+	// 		mask_irq(desc);
+	// } else {
+		// irq_state_set_disabled(desc);
+		if (desc->irq_data.chip->irq_disable) {
+			desc->irq_data.chip->irq_disable(&desc->irq_data);
+			// irq_state_set_masked(desc);
+		} else if (mask) {
+			mask_irq(desc);
+		}
+	// }
+}
+
+void irq_disable(struct irq_desc *desc)
+{
+	// __irq_disable(desc, irq_settings_disable_unlazy(desc));
+	__irq_disable(desc, 0);
 }

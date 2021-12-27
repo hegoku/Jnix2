@@ -10,6 +10,8 @@ struct irq_desc {
 	unsigned int		depth;
 	struct irq_data		irq_data;
 	const char		*name;
+	unsigned int irq_count;
+	unsigned int irqs_unhandled;
 };
 
 static inline unsigned int irq_desc_get_irq(struct irq_desc *desc)

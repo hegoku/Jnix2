@@ -3,6 +3,7 @@
 
 #include <jnix/types.h>
 #include <asm/page.h>
+#include <asm/thread_info.h>
 
 #define IO_BITMAP_OFFSET_INVALID	(__KERNEL_TSS_LIMIT + 1)
 
@@ -97,8 +98,7 @@ struct tss_struct {
 	struct x86_io_bitmap	io_bitmap;
 } __aligned(PAGE_SIZE);
 
-// #define TOP_OF_INIT_STACK ((unsigned long)&init_stack + sizeof(init_stack) - \
-			//    TOP_OF_KERNEL_STACK_PADDING)
-#define TOP_OF_INIT_STACK ((unsigned long)&init_stack + sizeof(init_stack)
+#define TOP_OF_INIT_STACK ((unsigned long)&init_stack + sizeof(init_stack) - \
+			   TOP_OF_KERNEL_STACK_PADDING)
 
 #endif

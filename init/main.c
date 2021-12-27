@@ -8,6 +8,10 @@
 
 extern void init_IRQ(void);
 
+extern void time_init(void);
+/* Default late time init is NULL. archs can override this later. */
+void (*__initdata late_time_init)(void);
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
 extern initcall_entry_t __initcall_start[];
@@ -98,8 +102,12 @@ __attribute__((regparm(0))) void __init __attribute__((no_sanitize_address)) sta
 	early_irq_init();
 	init_IRQ();
 
-	do_basic_setup();
+	time_init();
 
+	if (late_time_init)
+		late_time_init();
+
+	do_basic_setup();
 	int *a = 100;
 	*a = 0x98;
 	printk("done!\n");

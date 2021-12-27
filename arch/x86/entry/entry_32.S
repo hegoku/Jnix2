@@ -338,6 +338,16 @@ irq_entries_start:
 .size irq_entries_start, .-irq_entries_start
 
 ####
+idtentry vector=X86_TRAP_DE asmsym=asm_exc_de cfunc=exc_de has_error_code=0
+idtentry vector=X86_TRAP_DB asmsym=asm_exc_db cfunc=exc_db has_error_code=0
+idtentry vector=X86_TRAP_NMI asmsym=asm_exc_nmi cfunc=exc_nmi has_error_code=0
+idtentry vector=X86_TRAP_BP asmsym=asm_exc_bp cfunc=exc_bp has_error_code=0
+idtentry vector=X86_TRAP_OF asmsym=asm_exc_of cfunc=exc_of has_error_code=0
+
+idtentry vector=X86_TRAP_TS asmsym=asm_exc_ts cfunc=exc_ts has_error_code=1
+idtentry vector=X86_TRAP_NP asmsym=asm_exc_np cfunc=exc_np has_error_code=1
+idtentry vector=X86_TRAP_SS asmsym=asm_exc_ss cfunc=exc_ss has_error_code=1
+idtentry vector=X86_TRAP_GP asmsym=asm_exc_gp cfunc=exc_gp has_error_code=1
 idtentry vector=X86_TRAP_PF asmsym=asm_exc_page_fault cfunc=exc_page_fault has_error_code=1
 
 idtentry vector=0xFFFF asmsym=asm_common_interrupt cfunc=common_interrupt has_error_code=1

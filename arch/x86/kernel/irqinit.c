@@ -47,8 +47,9 @@ void __init native_init_IRQ(void)
 	// lapic_assign_system_vectors();
 
 	// if (!acpi_ioapic && !of_ioapic && nr_legacy_irqs()) {
-	// 	/* IRQ2 is cascade interrupt to second interrupt controller */
-	// 	if (request_irq(2, no_action, IRQF_NO_THREAD, "cascade", NULL))
-	// 		pr_err("%s: request_irq() failed\n", "cascade");
-	// }
+	if (nr_legacy_irqs()) {
+		/* IRQ2 is cascade interrupt to second interrupt controller */
+		if (request_irq(2, no_action, IRQF_NO_THREAD, "cascade", NULL))
+			printk("%s: request_irq() failed\n", "cascade");
+	}
 }

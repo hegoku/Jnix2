@@ -19,7 +19,7 @@ static inline unsigned long read_cr2(void)
 __attribute__((regparm(3))) void exc_page_fault(struct pt_regs *regs, unsigned long error_code)
 {
 	unsigned long address = read_cr2();
-	printk("page_fault:%x %x\n", address, error_code);
+	printk("page_fault: address:%#x error_code:%#x\n", address, error_code);
 
 	int index1 = address >> 22;
     int index2 = address >> 12 & 0x03FF;
@@ -35,4 +35,75 @@ __attribute__((regparm(3))) void exc_page_fault(struct pt_regs *regs, unsigned l
 	ptep[index2] = __pa(page)|PTE_IDENT_ATTR;
 	printk("%x %x\n",swapper_pg_dir, swapper_pg_dir[index1].pgd);
 	invalidate();
+}
+
+__attribute__((regparm(3))) void exc_de(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("de\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_db(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("db\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_nmi(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("nmi\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_bp(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("bp\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_of(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("of\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_ts(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("ts\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_np(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("np\n");
+	for (;;)
+	{
+	}
+}
+__attribute__((regparm(3))) void exc_ss(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("ss\n");
+	for (;;)
+	{
+	}
+}
+
+__attribute__((regparm(3))) void exc_gp(struct pt_regs *regs, unsigned long error_code)
+{
+	printk("gp\n");
+	for (;;)
+	{
+	}
 }

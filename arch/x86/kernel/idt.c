@@ -41,6 +41,16 @@
 	G(_vector, NULL, DEFAULT_STACK, GATE_TASK, DPL0, _gdt << 3)
 
 static const __initconst struct idt_data def_idts[] = {
+	INTG(X86_TRAP_DE,		asm_exc_de),
+	INTG(X86_TRAP_DB,		asm_exc_db),
+	INTG(X86_TRAP_NMI,		asm_exc_nmi),
+	INTG(X86_TRAP_BP,		asm_exc_bp),
+	INTG(X86_TRAP_OF,		asm_exc_of),
+
+	INTG(X86_TRAP_TS,		asm_exc_ts),
+	INTG(X86_TRAP_NP,		asm_exc_np),
+	INTG(X86_TRAP_SS,		asm_exc_ss),
+	INTG(X86_TRAP_GP,		asm_exc_gp),
 	INTG(X86_TRAP_PF,		asm_exc_page_fault),
 };
 
