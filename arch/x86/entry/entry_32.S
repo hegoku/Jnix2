@@ -408,7 +408,7 @@ ret_from_fork:
 
 // 	/* kernel thread */
 1:	movl	%edi, %eax
-	call %ebx
+	call *%ebx
 	/*
 	 * A kernel thread is allowed to return here after successfully
 	 * calling kernel_execve().  Exit to userspace to complete the execve()

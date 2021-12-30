@@ -14,7 +14,7 @@ int kthreadd(void *unused)
 	current->flags |= PF_NOFREEZE;
 
 	for(;;) {
-		printk("threadd ");
+		printk("threadd");
 		schedule();
 	}
 

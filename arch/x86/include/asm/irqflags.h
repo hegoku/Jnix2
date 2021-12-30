@@ -1,6 +1,8 @@
 #ifndef _X86_IRQFLAGS_H_
 #define _X86_IRQFLAGS_H_
 
+#include <jnix/init.h>
+
 #ifndef __ASSEMBLER__
 
 #define __cpuidle __section(".cpuidle.text")

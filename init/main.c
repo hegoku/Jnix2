@@ -222,5 +222,5 @@ static int __ref kernel_init(void *unused)
 			return 0;
 		printk("Requested init %s failed (error %d).",
 		      "/sbin/init", ret);
-	asm("hlt");
+	for(;;){}
 }
