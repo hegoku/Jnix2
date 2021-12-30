@@ -188,6 +188,7 @@ __attribute__((regparm(0))) void __init __attribute__((no_sanitize_address)) sta
 	printk("done!\n");
 	for (;;)
 	{
+		printk("main ");
 	}
 }
 
@@ -211,6 +212,10 @@ static int __ref kernel_init(void *unused)
 	int ret;
 
 	while(!kthreadd_done){}
+	for(;;){
+		printk("kernel_init ");
+		schedule();
+	}
 
 	ret = run_init_process("/sbin/init");
 		if (!ret)

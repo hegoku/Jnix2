@@ -18,6 +18,8 @@ struct task_struct init_task = {
 	.group_leader	= &init_task,
 	.comm		= INIT_TASK_COMM,
 	.thread		= INIT_THREAD,
+	.rq		    = LIST_HEAD_INIT(init_task.rq),
+	.flags      = PF_KTHREAD
 };
 
 // struct thread_info init_thread_info __init_thread_info = INIT_THREAD_INFO(init_task);

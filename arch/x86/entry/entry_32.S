@@ -264,6 +264,61 @@
 .size \asmsym, .-\asmsym
 .endm
 
+/*
+ * %eax: prev task
+ * %edx: next task
+ */
+ #define TASK_threadsp 100
+.pushsection .text, "ax"
+.globl __switch_to_asm
+__switch_to_asm:
+	/*
+	 * Save callee-saved registers
+	 * This must match the order in struct inactive_task_frame
+	 */
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%edi
+	pushl	%esi
+	/*
+	 * Flags are saved to prevent AC leakage. This could go
+	 * away if objtool would have 32bit support to verify
+	 * the STAC/CLAC correctness.
+	 */
+	pushfl
+
+	/* switch stack */
+	movl	%esp, TASK_threadsp(%eax)
+	movl	TASK_threadsp(%edx), %esp
+	
+#ifdef CONFIG_STACKPROTECTOR
+	#movl	TASK_stack_canary(%edx), %ebx
+	#movl	%ebx, PER_CPU_VAR(__stack_chk_guard)
+#endif
+
+#ifdef CONFIG_RETPOLINE
+	/*
+	 * When switching from a shallower to a deeper call stack
+	 * the RSB may either underflow or use entries populated
+	 * with userspace addresses. On CPUs where those concerns
+	 * exist, overwrite the RSB with entries which capture
+	 * speculative execution to prevent attack.
+	 */
+#	FILL_RETURN_BUFFER %ebx, RSB_CLEAR_LOOPS, X86_FEATURE_RSB_CTXSW
+#endif
+
+	/* Restore flags or the incoming task to restore AC state. */
+	popfl
+	/* restore callee-saved registers */
+	popl	%esi
+	popl	%edi
+	popl	%ebx
+	popl	%ebp
+	jmp	__switch_to
+.type __switch_to_asm, @function;
+.size __switch_to_asm, .-__switch_to_asm
+.popsection
+
 .globl handle_exception
 handle_exception:
 	/* the function address is in %gs's slot on the stack */
@@ -336,6 +391,34 @@ irq_entries_start:
     .endr
 .type irq_entries_start, @function;
 .size irq_entries_start, .-irq_entries_start
+
+.pushsection .text, "ax"
+.globl ret_from_fork
+ret_from_fork:
+// 	call	schedule_tail_wrapper
+
+	testl	%ebx, %ebx /* inactive_task_frame.bx */
+	jnz	1f		/* kernel threads are uncommon */
+
+// 2:
+	/* When we fork, we trace the syscall return in the child, too. */
+// 	movl    %esp, %eax
+// 	call    syscall_exit_to_user_mode
+// 	jmp     .Lsyscall_32_done
+
+// 	/* kernel thread */
+1:	movl	%edi, %eax
+	call %ebx
+	/*
+	 * A kernel thread is allowed to return here after successfully
+	 * calling kernel_execve().  Exit to userspace to complete the execve()
+	 * syscall.
+	 */
+// 	movl	$0, PT_EAX(%esp)
+// 	jmp	2b
+.type ret_from_fork, @function;
+.size ret_from_fork, .-ret_from_fork
+.popsection
 
 ####
 idtentry vector=X86_TRAP_DE asmsym=asm_exc_de cfunc=exc_de has_error_code=0

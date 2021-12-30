@@ -3,6 +3,7 @@
 #include <jnix/interrupt.h>
 #include <jnix/printk.h>
 #include <jnix/i8253.h>
+#include <jnix/sched.h>
 
 u64 jiffies_64 = INITIAL_JIFFIES;
 
@@ -10,6 +11,7 @@ static irqreturn_t timer_interrupt(int irq, void *dev_id)
 {
 	// global_clock_event->event_handler(global_clock_event);
 	// printk("#");
+	schedule();
 	return IRQ_HANDLED;
 }
 

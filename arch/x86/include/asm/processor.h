@@ -3,8 +3,8 @@
 
 #include <jnix/types.h>
 #include <asm/page.h>
-#include <asm/thread_info.h>
 #include <asm/segment.h>
+#include <jnix/sched/task_stack.h>
 
 #define IO_BITMAP_OFFSET_INVALID	(__KERNEL_TSS_LIMIT + 1)
 
@@ -102,6 +102,15 @@ struct tss_struct {
 #define TOP_OF_INIT_STACK ((unsigned long)&init_stack + sizeof(init_stack) - \
 			   TOP_OF_KERNEL_STACK_PADDING)
 
+#define task_top_of_stack(task) ((unsigned long)(task_pt_regs(task) + 1))
+
+#define task_pt_regs(task) \
+({									\
+	unsigned long __ptr = (unsigned long)task_stack_page(task);	\
+	__ptr += THREAD_SIZE - TOP_OF_KERNEL_STACK_PADDING;		\
+	((struct pt_regs *)__ptr) - 1;					\
+})
+
 #ifdef CONFIG_X86_64
 #define INIT_THREAD { }
 #else
@@ -114,9 +123,7 @@ struct tss_struct {
 struct thread_struct {
 	/* Cached TLS descriptors: */
 	// struct desc_struct	tls_array[GDT_ENTRY_TLS_ENTRIES];
-#ifdef CONFIG_X86_64
 	unsigned long		sp;
-#endif
 	unsigned long		sp0;
 #ifdef CONFIG_X86_64
 	unsigned short		es;
@@ -169,4 +176,8 @@ struct thread_struct {
 	 * the end.
 	 */
 };
+
+extern struct tss_struct cpu_tss_rw;
+extern unsigned long cpu_current_top_of_stack;
+
 #endif

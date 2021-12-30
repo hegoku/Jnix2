@@ -6,13 +6,16 @@
 #include <asm/current.h>
 #include <jnix/sched/signal.h>
 #include <jnix/printk.h>
+#include <asm/processor.h>
+#include <lib/string.h>
 
 unsigned int pid_count = 0;
 
 int __attribute__((weak)) arch_dup_task_struct(struct task_struct *dst,
 					       struct task_struct *src)
 {
-	*dst = *src;
+	// *dst = *src;
+	memcpy(dst, src, sizeof(struct task_struct));
 	return 0;
 }
 
@@ -32,8 +35,8 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	stack = alloc_thread_stack_node(tsk);
 
 	arch_dup_task_struct(tsk, orig);
-
 	tsk->stack = stack;
+
 	return tsk;
 }
 
@@ -42,15 +45,29 @@ static struct task_struct *copy_process(void *pid, struct kernel_clone_args *arg
 {
 	struct task_struct *p;
 	u64 clone_flags = args->flags;
+	int retval;
 
 	p = dup_task_struct(current);
+	if (args->io_thread) {
+		/*
+		 * Mark us an IO worker, and block any signal that isn't
+		 * fatal or STOP
+		 */
+		p->flags |= PF_IO_WORKER;
+		// siginitsetinv(&p->blocked, sigmask(SIGKILL)|sigmask(SIGSTOP));
+	}
 
-	// p->flags &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE | PF_NO_SETAFFINITY);
-	// p->flags |= PF_FORKNOEXEC;
+	current->flags &= ~PF_NPROC_EXCEEDED;
+
+	p->flags &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE | PF_NO_SETAFFINITY);
+	p->flags |= PF_FORKNOEXEC;
 	INIT_LIST_HEAD(&p->children);
 	INIT_LIST_HEAD(&p->sibling);
+	INIT_LIST_HEAD(&p->rq);
 
 	// p->utime = p->stime = p->gtime = 0;
+
+	retval = copy_thread(clone_flags, args->stack, args->stack_size, p, args->tls);
 
 	// p->pid = pid_nr(pid);
 	p->pid = ++pid_count;
@@ -84,7 +101,7 @@ static struct task_struct *copy_process(void *pid, struct kernel_clone_args *arg
 		// list_add_tail_rcu(&p->thread_node,
 					// &p->signal->thread_head);
 	}
-
+	
 	return p;
 }
 
@@ -155,7 +172,7 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 	// 	get_task_struct(p);
 	// }
 
-	// wake_up_new_task(p);
+	wake_up_new_task(p);
 
 	/* forking complete and child started to run, tell ptracer */
 	// if (unlikely(trace))

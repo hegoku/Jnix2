@@ -34,4 +34,7 @@ extern pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
 // extern long kernel_wait4(pid_t, int __user *, int, struct rusage *);
 // int kernel_wait(pid_t pid, int *stat);
 
+extern int copy_thread(unsigned long, unsigned long, unsigned long, struct task_struct *, unsigned long);
+
+
 #endif /* _JNIX_SCHED_TASK_H */

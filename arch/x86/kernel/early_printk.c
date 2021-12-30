@@ -13,7 +13,6 @@ static void early_vga_write(struct console *con, const char *str, unsigned n)
 {
 	char c;
 	int  i, k, j;
-	
 	while ((c = *str++) != '\0' && n-- > 0) {
 		if (current_ypos >= max_ypos) {
 			/* scroll 1 line up */
