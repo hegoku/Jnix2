@@ -356,25 +356,6 @@ ret_to_user:
 .type handle_exception, @function;
 .size handle_exception, .-handle_exception
 
-restore_all_switch_stack:
-#	SWITCH_TO_ENTRY_STACK
-#	CHECK_AND_APPLY_ESPFIX
-
-	/* Switch back to user CR3 */
-	SWITCH_TO_USER_CR3 scratch_reg=%eax
-
-#	BUG_IF_WRONG_CR3
-
-	/* Restore user state */
-	RESTORE_REGS pop=4			# skip orig_eax/error_code
-.Lirq_return:
-	/*
-	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on IRET core serialization
-	 * when returning from IPI handler and when returning from
-	 * scheduler to user-space.
-	 */
-	iret
-
 .align 8
 .globl irq_entries_start
 irq_entries_start:
@@ -392,6 +373,35 @@ irq_entries_start:
 .type irq_entries_start, @function;
 .size irq_entries_start, .-irq_entries_start
 
+#SYM_FUNC_START(entry_INT80_32)
+#	pushl	%eax			/* pt_regs->orig_ax */
+#
+#	SAVE_ALL pt_regs_ax=$-ENOSYS switch_stacks=1	/* save rest */
+#
+#	movl	%esp, %eax
+#	call	do_int80_syscall_32
+.Lsyscall_32_done:
+	// STACKLEAK_ERASE
+
+restore_all_switch_stack:
+#	SWITCH_TO_ENTRY_STACK
+#  CHECK_AND_APPLY_ESPFIX
+
+	/* Switch back to user CR3 */
+# SWITCH_TO_USER_CR3 scratch_reg=%eax
+
+# BUG_IF_WRONG_CR3
+
+	/* Restore user state */
+	RESTORE_REGS pop=4			# skip orig_eax/error_code
+.Lirq_return:
+	/*
+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on IRET core serialization
+	 * when returning from IPI handler and when returning from
+	 * scheduler to user-space.
+	 */
+	iret
+
 .pushsection .text, "ax"
 .globl ret_from_fork
 ret_from_fork:
@@ -400,9 +410,9 @@ ret_from_fork:
 	testl	%ebx, %ebx /* inactive_task_frame.bx */
 	jnz	1f		/* kernel threads are uncommon */
 
-// 2:
+2:
 	/* When we fork, we trace the syscall return in the child, too. */
-// 	movl    %esp, %eax
+	movl    %esp, %eax
 // 	call    syscall_exit_to_user_mode
 // 	jmp     .Lsyscall_32_done
 
@@ -414,8 +424,8 @@ ret_from_fork:
 	 * calling kernel_execve().  Exit to userspace to complete the execve()
 	 * syscall.
 	 */
-// 	movl	$0, PT_EAX(%esp)
-// 	jmp	2b
+	movl	$0, 24(%esp) //PT_EAX(%esp)
+	jmp	2b
 .type ret_from_fork, @function;
 .size ret_from_fork, .-ret_from_fork
 .popsection

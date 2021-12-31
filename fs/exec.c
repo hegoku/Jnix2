@@ -2,6 +2,11 @@
 #include <jnix/sched.h>
 #include <lib/string.h>
 
+// static int bprm_execve(struct linux_binprm *bprm, int fd, struct filename *filename, int flags)
+// {
+
+// }
+
 int kernel_execve(const char *kernel_filename, const char *const *argv, const char *const *envp)
 {
 	return 0;
