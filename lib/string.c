@@ -67,6 +67,22 @@ size_t strcmp(const char * str1, const char *str2)
 	return (*p1 - *p2);
 }
 
+int strncmp(const char *cs, const char *ct, size_t count)
+{
+	unsigned char c1, c2;
+
+	while (count) {
+		c1 = *cs++;
+		c2 = *ct++;
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
+		count--;
+	}
+	return 0;
+}
+
 void *memcpy(void *dest, const void *src, size_t n)
 {
 	char *tmp = dest;

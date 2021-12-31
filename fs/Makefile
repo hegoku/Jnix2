@@ -1,2 +1,2 @@
-obj-y := exec.o
+obj-y := exec.o filesystems.o fat/
 

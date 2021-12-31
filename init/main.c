@@ -180,15 +180,16 @@ __attribute__((regparm(0))) void __init __attribute__((no_sanitize_address)) sta
 	if (late_time_init)
 		late_time_init();
 
-	do_basic_setup();
 	int *a = 100;
 	*a = 0x98;
+
+	init_rootfs();
 
 	arch_call_rest_init();
 	printk("done!\n");
 	for (;;)
 	{
-		printk("main ");
+		// printk("main ");
 	}
 }
 
@@ -212,8 +213,12 @@ static int __ref kernel_init(void *unused)
 	int ret;
 
 	while(!kthreadd_done){}
+
+	do_basic_setup();
+	
+	
 	for(;;){
-		printk("kernel_init ");
+		// printk("kernel_init ");
 		schedule();
 	}
 
