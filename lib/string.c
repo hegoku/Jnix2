@@ -22,6 +22,17 @@ char *strncpy(char *dest, const char *src, size_t n)
 	return dest;
 }
 
+size_t strlcpy(char *dest, const char *src, size_t n)
+{
+	size_t ret = strlen(src);
+	if (n) {
+		size_t len = (ret>=n) ? n-1 : ret;
+		memcpy(dest, src, len);
+		dest[len] = '\0';
+	}
+	return ret;
+}
+
 size_t strcspn(const char *str1, const char *str2)
 {
 	const char *p;
@@ -56,6 +67,22 @@ size_t strcmp(const char * str1, const char *str2)
 	return (*p1 - *p2);
 }
 
+int strncmp(const char *cs, const char *ct, size_t count)
+{
+	unsigned char c1, c2;
+
+	while (count) {
+		c1 = *cs++;
+		c2 = *ct++;
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
+		count--;
+	}
+	return 0;
+}
+
 void *memcpy(void *dest, const void *src, size_t n)
 {
 	char *tmp = dest;
@@ -86,6 +113,17 @@ size_t strnlen(const char *s, size_t maxlen)
 	}
 
 	return (es - s);
+}
+
+size_t strlen(const char *s)
+{
+	size_t len = 0;
+	const char *ptr = s;
+	while(*ptr!='\n') {
+		len++;
+		ptr++;
+	}
+	return len;
 }
 
 void *memset(void *str, int c, size_t n)

@@ -201,11 +201,11 @@ initial_stack:
 .type initial_stack STT_OBJECT;
 .size initial_stack, .-initial_stack
 
-.section ".data..init_task", "a"
-init_thread_union:
-	.fill 1024,8,0
-.type init_thread_union STT_OBJECT;
-.size init_thread_union, .-init_thread_union
+#.section ".data..init_task", "a"
+#init_thread_union:
+#	.fill 1024,8,0
+#.type init_thread_union STT_OBJECT;
+#.size init_thread_union, .-init_thread_union
 
 .data
 # early boot GDT descriptor (must use 1:1 address mapping)

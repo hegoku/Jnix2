@@ -22,5 +22,7 @@ typedef u32 phys_addr_t;
 
 typedef int pid_t;
 
+typedef unsigned int fmode_t;
+
 #endif /* ASSEMBLER */
 #endif

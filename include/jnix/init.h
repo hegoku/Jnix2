@@ -83,7 +83,7 @@
  *
  * The markers follow same syntax rules as __init / __initdata.
  */
-#define __ref            __section(".ref.text") noinline
+#define __ref            __section(".ref.text") __attribute__ ((noinline))
 #define __refdata        __section(".ref.data")
 #define __refconst       __section(".ref.rodata")
 
@@ -162,7 +162,7 @@ extern unsigned int reset_devices;
 void setup_arch(char **);
 void prepare_namespace(void);
 void __init init_rootfs(void);
-// extern struct file_system_type rootfs_fs_type;
+extern struct file_system_type rootfs_fs_type;
 
 #if defined(CONFIG_STRICT_KERNEL_RWX) || defined(CONFIG_STRICT_MODULE_RWX)
 extern bool rodata_enabled;

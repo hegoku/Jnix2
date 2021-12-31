@@ -4,11 +4,14 @@
 #include <lib/vsprintf.h>
 #include <jnix/printk.h>
 #include <jnix/init.h>
+#include <jnix/spinlock.h>
 
 static struct console *exclusive_console;
 struct console *console_drivers;
 
 static void call_console_drivers(const char *text, size_t len);
+
+spinlock_t console_lock;
 
 static void call_console_drivers(const char *text, size_t len)
 {
@@ -17,6 +20,7 @@ static void call_console_drivers(const char *text, size_t len)
     if (!console_drivers)
 		return;
 	
+	spin_lock_irq(&console_lock);
 	for_each_console(con) {
 		if (exclusive_console && con != exclusive_console)
 			continue;
@@ -28,6 +32,7 @@ static void call_console_drivers(const char *text, size_t len)
 			con->write(con, text, len);
 		}
 	}
+	spin_unlock_irq(&console_lock);
 }
 
 int printk(const char *fmt, ...)

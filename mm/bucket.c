@@ -35,6 +35,9 @@
 #include <mm/kmalloc.h>
 #include <lib/string.h>
 #include <jnix/printk.h>
+#include <jnix/spinlock.h>
+
+spinlock_t bucket_lock;
 
 // 存储桶描述符结构。
 struct bucket_desc {	/* 16 bytes */
@@ -89,7 +92,7 @@ void init_bucket_desc()
 // 申请一页内存，用于存放桶描述符。如果失败，则显示初始化桶描述符时内存不够出错信息，死机。
 	first = bdesc = (struct bucket_desc *) get_free_page();
 	if (!bdesc) {
-        printk("Out of memory in init_bucket_desc()");
+        printk("Out of memory in init_bucket_desc()\n");
     }
     // 首先计算一页内存中可存放的桶描述符数量，然后对其建立单向连接指针。
 	for (i = PAGE_SIZE/sizeof(struct bucket_desc); i > 1; i--) {
@@ -126,12 +129,13 @@ void *kmalloc(unsigned int len)
 // 程序的分配限制(最长为1 个页面)。于是显示出错信息，死机。
 	if (!bdir->size) {
 		printk("kmalloc called with impossibly large argument (%d)\n", len);
-		printk("kmalloc: bad arg");
+		printk("kmalloc: bad arg\n");
     }
     /*
 	 * 现在我们来搜索具有空闲空间的桶描述符。
 	 */
 	// asm("cli");	/* 为了避免出现竞争条件，首先关中断 */
+	spin_lock_irq(&bucket_lock);
 // 搜索对应桶目录项中描述符链表，查找具有空闲空间的桶描述符。如果桶描述符的空闲内存指针
 // freeptr 不为空，则表示找到了相应的桶描述符。
 	for (bdesc = bdir->chain; bdesc; bdesc = bdesc->next) 
@@ -154,7 +158,7 @@ void *kmalloc(unsigned int len)
         bdesc->page = bdesc->freeptr = cp = (void *)get_free_page();
         // 如果申请内存页面操作失败，则显示出错信息，死机。
         if (!cp) {
-            printk("Out of memory in kernel kmalloc()");
+            printk("Out of memory in kernel kmalloc()\n");
         }
 		/* 在该页空闲内存中建立空闲对象链表 */
 // 以该桶目录项指定的桶大小为对象长度，对该页内存进行划分，并使每个对象的开始4 字节设置
@@ -177,6 +181,7 @@ void *kmalloc(unsigned int len)
 	bdesc->refcnt++;
 // 最后开放中断，并返回指向空闲内存对象的指针。
 	// asm("sti");	/* OK，现在我们又安全了 */
+	spin_unlock_irq(&bucket_lock);
 	return(retval);
 }
 
@@ -211,11 +216,12 @@ void kfree(void *obj, unsigned int size)
 		}
 	}
 // 若搜索了对应目录项的所有描述符都没有找到指定的页面，则显示出错信息，死机。
-	printk("Bad address passed to kernel kfree()");
+	printk("Bad address passed to kernel kfree()\n");
 found:
     // 找到对应的桶描述符后，首先关中断。然后将该对象内存块链入空闲块对象链表中，
     // 并使该描述符的对象引用计数减1。
 	// asm("cli"); /* 为了避免竞争条件 */
+	spin_lock_irq(&bucket_lock);
 	*((void **)obj) = bdesc->freeptr;
 	bdesc->freeptr = obj;
 	bdesc->refcnt--;
@@ -239,7 +245,7 @@ found:
 // 从链表中删除，应该让chain 指向下一个描述符。
 		else {
 			if (bdir->chain != bdesc) {
-                printk("malloc bucket chains corrupted");
+                printk("malloc bucket chains corrupted\n");
             }
 			bdir->chain = bdesc->next;
 		}
@@ -250,6 +256,7 @@ found:
 	}
 // 开中断，返回。
     // asm("sti");
+	spin_unlock_irq(&bucket_lock);
     return;
 }
 
