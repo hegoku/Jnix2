@@ -132,6 +132,7 @@
 #define __USER_DS			(GDT_ENTRY_DEFAULT_USER_DS*8 + 3)
 #define __USER_CS			(GDT_ENTRY_DEFAULT_USER_CS*8 + 3)
 #define __ESPFIX_SS			(GDT_ENTRY_ESPFIX_SS*8)
+#define __KERNEL_TSS		(GDT_ENTRY_TSS*8)
 
 /* segment for calling fn: */
 #define PNP_CS32			(GDT_ENTRY_PNPBIOS_CS32*8)

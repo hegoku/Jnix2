@@ -101,4 +101,5 @@ struct tss_struct {
 #define TOP_OF_INIT_STACK ((unsigned long)&init_stack + sizeof(init_stack) - \
 			   TOP_OF_KERNEL_STACK_PADDING)
 
+extern struct tss_struct cpu_tss_rw;
 #endif

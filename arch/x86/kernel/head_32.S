@@ -66,6 +66,9 @@ startup_32:
 	movl $(__KERNEL_STACK_CANARY),%eax
 	movl %eax,%gs
 
+	movw $(__KERNEL_TSS),%ax # load TSS
+	ltr %ax
+
 	xorl %eax,%eax			# Clear LDT
 	lldt %ax
 
