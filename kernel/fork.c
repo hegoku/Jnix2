@@ -8,6 +8,7 @@
 #include <jnix/printk.h>
 #include <asm/processor.h>
 #include <lib/string.h>
+#include <asm/pgalloc.h>
 
 unsigned int pid_count = 0;
 
@@ -40,6 +41,103 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	return tsk;
 }
 
+#define allocate_mm()	(kzmalloc(sizeof(struct mm_struct)))
+#define free_mm(mm)	(kfree(mm, sizeof(struct mm_struct)))
+
+static inline int mm_alloc_pgd(struct mm_struct *mm)
+{
+	mm->pgd = pgd_alloc(mm);
+	if (!mm->pgd)
+		// return -ENOMEM;
+		return -1;
+	return 0;
+}
+
+static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p)
+{
+	mm_alloc_pgd(mm);
+	return mm;
+}
+
+static struct mm_struct *dup_mm(struct task_struct *tsk, struct mm_struct *oldmm)
+{
+	struct mm_struct *mm;
+	int err;
+
+	mm = allocate_mm();
+	if (!mm)
+		goto fail_nomem;
+
+	memcpy(mm, oldmm, sizeof(*mm));
+
+	// if (!mm_init(mm, tsk, mm->user_ns))
+	if (!mm_init(mm, tsk))
+		goto fail_nomem;
+	
+
+	// err = dup_mmap(mm, oldmm);
+	if (err)
+		goto free_pt;
+
+	// mm->hiwater_rss = get_mm_rss(mm);
+	// mm->hiwater_vm = mm->total_vm;
+
+	// if (mm->binfmt && !try_module_get(mm->binfmt->module))
+	// 	goto free_pt;
+
+	return mm;
+
+free_pt:
+	/* don't put binfmt in mmput, we haven't got module yet */
+	// mm->binfmt = NULL;
+	// mm_init_owner(mm, NULL);
+	// mmput(mm);
+
+fail_nomem:
+	return NULL;
+}
+
+static int copy_mm(unsigned long clone_flags, struct task_struct *tsk)
+{
+	struct mm_struct *mm, *oldmm;
+
+	// tsk->min_flt = tsk->maj_flt = 0;
+	// tsk->nvcsw = tsk->nivcsw = 0;
+#ifdef CONFIG_DETECT_HUNG_TASK
+	// tsk->last_switch_count = tsk->nvcsw + tsk->nivcsw;
+	// tsk->last_switch_time = 0;
+#endif
+
+	tsk->mm = NULL;
+	tsk->active_mm = NULL;
+
+	/*
+	 * Are we cloning a kernel thread?
+	 *
+	 * We need to steal a active VM for that..
+	 */
+	oldmm = current->mm;
+	if (!oldmm)
+		return 0;
+
+	/* initialize the new vmacache entries */
+	// vmacache_flush(tsk);
+
+	if (clone_flags & CLONE_VM) {
+		// mmget(oldmm);
+		mm = oldmm;
+	} else {
+		mm = dup_mm(tsk, current->mm);
+		if (!mm)
+			// return -ENOMEM;
+			return -1;
+	}
+
+	tsk->mm = mm;
+	tsk->active_mm = mm;
+	return 0;
+}
+
 // static struct task_struct *copy_process(struct pid *pid, struct kernel_clone_args *args)
 static struct task_struct *copy_process(void *pid, struct kernel_clone_args *args)
 {
@@ -67,6 +165,7 @@ static struct task_struct *copy_process(void *pid, struct kernel_clone_args *arg
 
 	// p->utime = p->stime = p->gtime = 0;
 
+	retval = copy_mm(clone_flags, p);
 	retval = copy_thread(clone_flags, args->stack, args->stack_size, p, args->tls);
 
 	// p->pid = pid_nr(pid);

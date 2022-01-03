@@ -77,6 +77,7 @@ extern unsigned long max_low_pfn_mapped;
 extern unsigned long max_pfn_mapped;
 
 void init_page();
+
 #endif /* __ASSEMBLER__ */
 
 #endif /*_ASM_X86_PAGE_H*/

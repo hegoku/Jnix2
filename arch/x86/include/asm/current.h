@@ -2,6 +2,8 @@
 #define _ASM_X86_CURRENT_H
 
 #ifndef __ASSEMBLER__
+#include <jnix/sched.h>
+
 struct task_struct;
 
 extern struct task_struct * current_task;

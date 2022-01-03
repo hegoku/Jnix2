@@ -10,6 +10,9 @@
 #include <jnix/binfmts.h>
 #include <jnix/sched/init.h>
 #include <jnix/kthread.h>
+#include <asm/current.h>
+#include <asm/pgalloc.h>
+#include <mm/page.h>
 
 #define CONFIG_INIT_ENV_ARG_LIMIT 10
 #define MAX_INIT_ARGS CONFIG_INIT_ENV_ARG_LIMIT
@@ -180,8 +183,8 @@ __attribute__((regparm(0))) void __init __attribute__((no_sanitize_address)) sta
 	if (late_time_init)
 		late_time_init();
 
-	int *a = 100;
-	*a = 0x98;
+	// int *a = 100;
+	// *a = 0x98;
 
 	init_rootfs();
 
@@ -208,24 +211,75 @@ static int run_init_process(const char *init_filename)
 	return kernel_execve(init_filename, argv_init, envp_init);
 }
 
+static int aa()
+{
+	// for (;;)
+	// {
+	asm("movl $20, %eax;int $0x80");
+	// asm("movl $100,%eax;hlt");
+	// }
+}
+
 static int __ref kernel_init(void *unused)
 {
 	int ret;
 
-	while(!kthreadd_done){}
-
-	do_basic_setup();
-	
-	
-	for(;;){
-		// printk("kernel_init ");
+	while(!kthreadd_done){
 		schedule();
 	}
 
+	do_basic_setup();
+	
+	// for(;;){
+	// 	printk("kernel_init ");
+	// 	schedule();
+	// }
+
+	current->mm = (struct mm_struct*)kzmalloc(sizeof(struct mm_struct));
+	current->mm->pgd = pgd_alloc(current->mm);
+	current->active_mm = current->mm;
+	int a = 0;
+	
+	for (a = 768; a < 1024; a++)
+	{
+		current->mm->pgd[a] = swapper_pg_dir[a];
+	}
+	a = 0;
+	int mem = 0x7;
+	u32 *ptep;
+	for (a = 0; a < 256; a++)
+	{
+		swapper_pg_dir[a].pgd = __pa(get_free_page())|0x7;
+		
+		ptep = (u32*)__va(swapper_pg_dir[a].pgd & 0xFFFFF000);
+		
+		for (int b = 0; b < 1024; b++)
+		{
+			*ptep = mem;
+			ptep++;
+			mem += PAGE_SIZE;
+		}
+	}
+	
+	__asm__ __volatile__("movl %%cr3,%%eax\n\tmovl %%eax,%%cr3"
+						 :
+						 :
+						 : "ax");
+	task_pt_regs(current)->ip = __pa(aa);
+	task_pt_regs(current)->ds = __USER_DS;
+	task_pt_regs(current)->es = __USER_DS;
+	// task_pt_regs(current)->fs = __USER_DS;
+	// task_pt_regs(current)->gs = __USER_DS;
+	task_pt_regs(current)->ss = __USER_DS;
+	task_pt_regs(current)->cs = __USER_CS;
+	task_pt_regs(current)->sp = 0x100;
+	task_pt_regs(current)->flags = 0x3202;
+	return 0;
+
 	ret = run_init_process("/sbin/init");
-		if (!ret)
-			return 0;
-		printk("Requested init %s failed (error %d).",
-		      "/sbin/init", ret);
+	if (!ret)
+		return 0;
+	printk("Requested init %s failed (error %d).",
+			"/sbin/init", ret);
 	for(;;){}
 }

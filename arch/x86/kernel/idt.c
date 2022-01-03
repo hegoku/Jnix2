@@ -8,6 +8,7 @@
 #include <asm/fault.h>
 #include <asm/hw_irq.h>
 #include <asm/desc.h>
+#include <asm/proto.h>
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
@@ -52,6 +53,8 @@ static const __initconst struct idt_data def_idts[] = {
 	INTG(X86_TRAP_SS,		asm_exc_ss),
 	INTG(X86_TRAP_GP,		asm_exc_gp),
 	INTG(X86_TRAP_PF,		asm_exc_page_fault),
+
+	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
 };
 
 /* Must be page-aligned because the real IDT is used in the cpu entry area */
@@ -111,6 +114,8 @@ void __init idt_setup_apic_and_irq_gates(void)
 	// idt_setup_from_table(idt_table, apic_idts, ARRAY_SIZE(apic_idts), 1);
 
 	for (i=FIRST_EXTERNAL_VECTOR; i<FIRST_SYSTEM_VECTOR; i++) {
+		if (i==0x80)
+			continue;
 		entry = irq_entries_start + 8 * (i - FIRST_EXTERNAL_VECTOR);
 		set_intr_gate(i, entry);
 	}
