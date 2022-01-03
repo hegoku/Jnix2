@@ -1,4 +1,5 @@
 #include <jnix/mount.h>
+#include <uapi/asm-generic/errno.h>
 
 struct vfsmount *vfs_kern_mount(struct file_system_type *type,
 				int flags, const char *name,
@@ -9,8 +10,7 @@ struct vfsmount *vfs_kern_mount(struct file_system_type *type,
 	int ret = 0;
 
 	if (!type)
-		// return ERR_PTR(-EINVAL);
-		return -1;
+		return ERR_PTR(-EINVAL);
 
 	fc = fs_context_for_mount(type, flags);
 	if (IS_ERR(fc))
@@ -24,8 +24,7 @@ struct vfsmount *vfs_kern_mount(struct file_system_type *type,
 	if (!ret)
 		mnt = fc_mount(fc);
 	else
-		// mnt = ERR_PTR(ret);
-		mnt = -1;
+		mnt = ERR_PTR(ret);
 
 	// put_fs_context(fc);
 	return mnt;

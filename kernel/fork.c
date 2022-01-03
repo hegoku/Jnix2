@@ -9,6 +9,7 @@
 #include <asm/processor.h>
 #include <lib/string.h>
 #include <asm/pgalloc.h>
+#include <uapi/asm-generic/errno.h>
 
 unsigned int pid_count = 0;
 
@@ -48,8 +49,7 @@ static inline int mm_alloc_pgd(struct mm_struct *mm)
 {
 	mm->pgd = pgd_alloc(mm);
 	if (!mm->pgd)
-		// return -ENOMEM;
-		return -1;
+		return -ENOMEM;
 	return 0;
 }
 
@@ -129,8 +129,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct *tsk)
 	} else {
 		mm = dup_mm(tsk, current->mm);
 		if (!mm)
-			// return -ENOMEM;
-			return -1;
+			return -ENOMEM;
 	}
 
 	tsk->mm = mm;
@@ -225,8 +224,7 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 	if ((args->flags & CLONE_PIDFD) &&
 	    (args->flags & CLONE_PARENT_SETTID) &&
 	    (args->pidfd == args->parent_tid))
-		// return -EINVAL;
-		return -1;
+		return -EINVAL;
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When

@@ -3,6 +3,7 @@
 #include <asm/trapnr.h>
 #include <asm/page.h>
 #include <asm/irq_vectors.h>
+#include <uapi/asm-generic/errno.h>
 
 #define PTI_SWITCH_MASK         (1 << PAGE_SHIFT)
 
@@ -377,7 +378,7 @@ irq_entries_start:
 entry_INT80_32:
 	pushl	%eax			/* pt_regs->orig_ax */
 #
-	SAVE_ALL pt_regs_ax=$-38 switch_stacks=1	/* save rest */
+	SAVE_ALL pt_regs_ax=$-ENOSYS switch_stacks=1	/* save rest */
 #
 	movl	%esp, %eax
 	call	do_int80_syscall_32
