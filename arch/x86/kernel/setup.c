@@ -12,6 +12,7 @@
 #include <mm/kmalloc.h>
 #include <mm/mm.h>
 #include <asm/irq.h>
+#include <asm/processor.h>
 
 /*
  * max_low_pfn_mapped: highest directly mapped pfn < 4 GB
@@ -125,6 +126,21 @@ void * __init extend_brk(size_t size, size_t align)
 
 void __init setup_arch(char **cmdline_p)
 {
+	tss_desc td = {
+		.base0 = (u16)((u32)&cpu_tss_rw),
+		.base1 = (u16)(((u32)&cpu_tss_rw)>>16) & 0xFF,
+		.base2 = (u16)(((u32)&cpu_tss_rw)>>24) & 0xFF,
+		.limit0 = (u16)(sizeof(struct tss_struct)-1),
+		.limit1 = (u16)((sizeof(struct tss_struct)-1) >> 16) & 0x0F,
+		.type = (0x0089 & 0x0f),
+		.dpl = (0x0089 >> 5) & 0x03,
+		.p = (0x0089 >> 7) & 0x01,
+		.zero0 = (0x0089 >> 12) & 0x07,
+		.g = (0x0089 >> 15) & 0x01,
+	};
+	memcpy(&gdt_page.gdt[GDT_ENTRY_TSS], &td, sizeof(tss_desc));
+	asm volatile("ltr %w0"::"q" (GDT_ENTRY_TSS*8));
+
 	sanitize_e820_map();
 	max_pfn = e820_end_of_ram_pfn();
 

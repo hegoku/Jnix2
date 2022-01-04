@@ -1,4 +1,4 @@
-obj-y := memblock.o page_alloc.o bucket.o mm.o
+obj-y := memblock.o page_alloc.o bucket.o mm.o init_mm.o
 #obj-y := $(addprefix $(output_dir)/, $(obj-y))
 
 

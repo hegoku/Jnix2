@@ -3,6 +3,7 @@
 
 #include <jnix/types.h>
 #include <jnix/list.h>
+#include <jnix/mm_types.h>
 
 #include <asm/page.h>
 #include <asm/thread_info.h>
@@ -96,7 +97,9 @@ struct task_struct {
 	void *stack;
 	struct list_head tasks;
 
-	// struct mm_struct *mm;
+	unsigned int flags;
+	struct mm_struct *mm;
+	struct mm_struct *active_mm;
 
 	int exit_state;
 	int exit_code;
@@ -120,7 +123,6 @@ struct task_struct {
 
 	struct thread_struct thread;
 
-	unsigned int flags;
 };
 
 union thread_union {

@@ -3,6 +3,7 @@
 #include <jnix/irqnr.h>
 #include <mm/kmalloc.h>
 #include <jnix/printk.h>
+#include <uapi/asm-generic/errno.h>
 
 #include "internals.h"
 
@@ -67,8 +68,7 @@ int request_irq(unsigned int irq, irq_handler_t handler, unsigned long irqflags,
 
 	desc = irq_to_desc(irq);
 	if (!desc)
-		return -1;
-		// return -EINVAL;
+		return -EINVAL;
 
 	// if (!irq_settings_can_request(desc) ||
 	//     WARN_ON(irq_settings_is_per_cpu_devid(desc)))
@@ -82,8 +82,7 @@ int request_irq(unsigned int irq, irq_handler_t handler, unsigned long irqflags,
 
 	action = kzmalloc(sizeof(struct irqaction));
 	if (!action)
-		return -1;
-		// return -ENOMEM;
+		return -ENOMEM;
 
 	action->handler = handler;
 	// action->flags = irqflags;

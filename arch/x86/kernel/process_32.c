@@ -19,7 +19,7 @@ __attribute__((regparm(2))) struct task_struct *__switch_to(struct task_struct *
 	// printk("before: %x %x %x\n", next_p, &(next_p->thread.sp0), next_p->thread.sp0);
 	// printk("prev: %x %x %x\n", prev_p, &(prev_p->thread.sp0), prev_p->thread.sp0);
 
-	cpu_tss_rw.x86_tss.sp1 = next_p->thread.sp0;
+	cpu_tss_rw.x86_tss.sp0 = next_p->thread.sp0;
 
 	cpu_current_top_of_stack = (unsigned long)task_stack_page(next_p) + THREAD_SIZE;
 	current_task = next_p;

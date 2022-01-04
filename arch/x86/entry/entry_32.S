@@ -3,6 +3,7 @@
 #include <asm/trapnr.h>
 #include <asm/page.h>
 #include <asm/irq_vectors.h>
+#include <uapi/asm-generic/errno.h>
 
 #define PTI_SWITCH_MASK         (1 << PAGE_SHIFT)
 
@@ -268,7 +269,7 @@
  * %eax: prev task
  * %edx: next task
  */
- #define TASK_threadsp 100
+ #define TASK_threadsp 112
 .pushsection .text, "ax"
 .globl __switch_to_asm
 __switch_to_asm:
@@ -373,13 +374,14 @@ irq_entries_start:
 .type irq_entries_start, @function;
 .size irq_entries_start, .-irq_entries_start
 
-#SYM_FUNC_START(entry_INT80_32)
-#	pushl	%eax			/* pt_regs->orig_ax */
+.globl entry_INT80_32
+entry_INT80_32:
+	pushl	%eax			/* pt_regs->orig_ax */
 #
-#	SAVE_ALL pt_regs_ax=$-ENOSYS switch_stacks=1	/* save rest */
+	SAVE_ALL pt_regs_ax=$-ENOSYS switch_stacks=1	/* save rest */
 #
-#	movl	%esp, %eax
-#	call	do_int80_syscall_32
+	movl	%esp, %eax
+	call	do_int80_syscall_32
 .Lsyscall_32_done:
 	// STACKLEAK_ERASE
 
@@ -401,6 +403,8 @@ restore_all_switch_stack:
 	 * scheduler to user-space.
 	 */
 	iret
+.type entry_INT80_32, @function;
+.size entry_INT80_32, .-entry_INT80_32
 
 .pushsection .text, "ax"
 .globl ret_from_fork
@@ -414,7 +418,7 @@ ret_from_fork:
 	/* When we fork, we trace the syscall return in the child, too. */
 	movl    %esp, %eax
 // 	call    syscall_exit_to_user_mode
-// 	jmp     .Lsyscall_32_done
+ 	jmp     .Lsyscall_32_done
 
 // 	/* kernel thread */
 1:	movl	%edi, %eax

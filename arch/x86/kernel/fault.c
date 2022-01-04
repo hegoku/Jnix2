@@ -2,6 +2,7 @@
 #include <asm/fault.h>
 #include <jnix/printk.h>
 #include <mm/page.h>
+#include <asm/current.h>
 
 #define __FORCE_ORDER "m"(*(unsigned int *)0x1000UL)
 
@@ -19,7 +20,13 @@ static inline unsigned long read_cr2(void)
 __attribute__((regparm(3))) void exc_page_fault(struct pt_regs *regs, unsigned long error_code)
 {
 	unsigned long address = read_cr2();
-	printk("page_fault: address:%#x error_code:%#x\n", address, error_code);
+	printk("pid:%d page_fault: address:%#x error_code:%#x\n", current->pid, address, error_code);
+	if (error_code&1) {
+		printk("page-protection violation\n");
+		for (;;)
+		{
+		}
+	}
 
 	int index1 = address >> 22;
     int index2 = address >> 12 & 0x03FF;
@@ -102,7 +109,25 @@ __attribute__((regparm(3))) void exc_ss(struct pt_regs *regs, unsigned long erro
 
 __attribute__((regparm(3))) void exc_gp(struct pt_regs *regs, unsigned long error_code)
 {
-	printk("gp\n");
+	unsigned char index, tbl, e;
+	index = error_code >> 3;
+	tbl = (error_code&0x6) >> 1;
+	e = error_code & 0x1;
+	printk("General Protection: code:%d e:%d ", error_code, e);
+	if ((tbl & 0x1) || (tbl & 0x3))
+	{
+		printk("IDT:%#x ", index);
+	}
+	else if (tbl & 0x0 == 0)
+	{
+		printk("GDT:%#x ", index);
+	}
+	else if (tbl & 0x2)
+	{
+		printk("LDT:%#x ", index);
+	}
+	printk("pid:%d thread_sp:%#x\n", current->pid, current->thread.sp0);
+	printk("ss:%#x sp:%#x flags:%#x cs:%#x ip:%#x\n", regs->ss, regs->sp, regs->flags, regs->cs, regs->ip);
 	for (;;)
 	{
 	}
