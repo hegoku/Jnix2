@@ -1,9 +1,9 @@
-AS = i386-elf-as
-CC = i386-elf-gcc
-LD = i386-elf-ld
-OBJCOPY = i386-elf-objcopy
+#AS = i386-elf-as
+#CC = i386-elf-gcc
+#LD = i386-elf-ld
+#OBJCOPY = i386-elf-objcopy
 CFLAGS := -I ../../../include -I ../include -c -nostdlib -fno-builtin -m16
-ASFLAGS := -I ../../../include -I ../include -c -nostdlib -fno-builtin
+#ASFLAGS := -I ../../../include -I ../include -c -nostdlib -fno-builtin
 
 ASFLAGS := $(KBUILD_CFLAGS)
 KBUILD_CFLAGS := $(KBUILD_CFLAGS) -m16 #-mregparm=3
@@ -29,7 +29,7 @@ $(output_dir)/setup.bin : $(output_dir)/setup.elf
 	$(OBJCOPY) -O binary $< $@
 
 $(output_dir)/setup.elf : $(setup-y) $(obj)/setup.ld
-	$(LD) -s -T $(obj)/setup.ld -m elf_i386 -o $@ $(setup-y)
+	$(LD) -s -T $(obj)/setup.ld $(KBUILD_LDFLAGS) -o $@ $(setup-y)
 
 # $(output_dir)/%.o : %.c
 # 	$(CC) $(CFLAGS) $< -o $@

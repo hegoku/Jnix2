@@ -13,7 +13,7 @@ $(output_dir)/kernel.bin : $(output_dir)/kernel.elf
 	$(OBJCOPY) -O binary $< $@
 
 $(output_dir)/kernel.elf : $(kernel-y) $(output_dir)/vmjnix.lds $(build-in)
-	$(LD) -T $(output_dir)/vmjnix.lds -m elf_i386 -o $@ $(kernel-y) $(build-in)
+	$(LD) -T $(output_dir)/vmjnix.lds $(KBUILD_LDFLAGS) -o $@ $(kernel-y) $(build-in)
 
 #$(output_dir)/head_32.o : $(obj)/head_32.S
 #	$(CC) $(ASFLAGS) $< -o $@

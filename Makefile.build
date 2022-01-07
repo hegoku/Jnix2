@@ -1,11 +1,20 @@
-AS = i386-elf-as
-CC = i386-elf-gcc
-CPP = i386-elf-cpp
-LD = i386-elf-ld
-AR = i386-elf-ar
-OBJCOPY = i386-elf-objcopy
+AS = x86_64-elf-as
+CC = x86_64-elf-gcc
+CPP = x86_64-elf-cpp
+LD = x86_64-elf-ld
+AR = x86_64-elf-ar
+OBJCOPY = x86_64-elf-objcopy
 KBUILD_INCLUDE := -I ./include -I ./$(obj)/include -I ./$(obj)/../include -I ./arch/$(SRCARCH)/include
 KBUILD_CFLAGS := -c -nostdlib -fno-builtin $(KBUILD_INCLUDE) $(KCONFIG_CONFIG)
+KBUILD_LDFLAGS :=
+
+ifeq ($(CONFIG_X86_32),y)
+	KBUILD_LDFLAGS += -m elf_i386
+	KBUILD_CFLAGS += -m32 -march=i386
+else
+	KBUILD_LDFLAGS += -m elf_x86_64
+	KBUILD_CFLAGS += -m64 -march=x86-64
+endif
 
 src = $(obj)
 slash_obj = $(subst /,_,$(obj))
@@ -45,7 +54,7 @@ subdir-target := $(patsubst %, $(output_dir)/$(slash_obj)_%_build-in.o, $(subdir
 obj-y := $(addprefix $(output_dir)/, $(obj-y))
 
 $(output_dir)/$(slash_obj)_build-in.o: $(obj-y) $(subdir-target) $(kbuild-file)
-	$(LD) -r $(obj-y) -o $@
+	$(LD) -r $(obj-y) $(KBUILD_LDFLAGS) -o $@
 
 $(output_dir)/%.o : $(obj)/%.c
 	$(CC) $(KBUILD_CFLAGS) $< -o $@

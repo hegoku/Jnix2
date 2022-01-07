@@ -41,7 +41,7 @@ vmjnix: $(build-dirs)
 #	$(MAKE) output_dir="$(BUILD_DIR)" -C mm
 
 debug:
-	i386-elf-objdump -l -d -r build/kernel.elf >setup.txt
+	x86_64-elf-objdump -l -d -r build/kernel.elf >setup.txt
 	#i386-elf-objdump  -m i8086 -l -d -r build/kernel.elf >setup.txt
 	
 buildimage:
@@ -55,7 +55,7 @@ clean:
 	rm build/*
 
 run:
-	qemu-system-i386 -s -m 1G  -kernel build/bzimage
+	qemu-system-x86_64 -s -m 1G  -kernel build/bzimage
 
 map:
 	i386-elf-nm -n build/kernel.elf | grep -v '\( [aNUw] \)\|\(__crc_\)\|\( \$[adt]\)\|\( .L\)' > System.map
