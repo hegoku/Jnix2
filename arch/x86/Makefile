@@ -2,6 +2,14 @@
 # b := $(addprefix $(makefile_path)/, $(addsuffix /Makefile, $(subdir)))
 # include $(b)
 
+export BITS
+
+ifeq ($(CONFIG_X86_32),y)
+	BITS := 32
+else
+	BITS := 64
+endif
+
 boot := arch/x86/boot
 kernel := arch/x86/kernel
 # mm := arch/x86/mm

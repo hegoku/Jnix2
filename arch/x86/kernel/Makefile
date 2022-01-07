@@ -2,8 +2,8 @@ ASFLAGS := $(KBUILD_CFLAGS)
 
 # all: kernel
 
-kernel-y := head_32.so setup.o head32.o idt.o e820.o early_printk.o fault.o time.o i8259.o irqinit.o traps.o irq.o irq_32.o \
-	i8253.o process.o common.o process_32.o
+kernel-y := head_$(BITS).so setup.o head$(BITS).o idt.o e820.o early_printk.o fault.o time.o i8259.o irqinit.o traps.o irq.o irq_$(BITS).o \
+	i8253.o process.o common.o process_$(BITS).o
 kernel-y := $(addprefix $(output_dir)/, $(kernel-y))
 # kernel: $(output_dir)/kernel.bin
 
