@@ -1,25 +1,48 @@
 
 PAGE_SIZE = 4096;
 LOAD_PHYSICAL_ADDR = 0x100000;
-LOAD_OFFSET = 0xC0000000;
+
+#define __START_KERNEL_map 0xffffffff80000000UL
+#ifdef CONFIG_X86_32
+#define LOAD_OFFSET 0xC0000000
+#else
+#define __START_KERNEL __START_KERNEL_map+LOAD_PHYSICAL_ADDR
+#define LOAD_OFFSET __START_KERNEL_map
+#endif
 
 THREAD_SIZE = 1024*8;
 
+#ifdef CONFIG_X86_32
 OUTPUT_ARCH(i386)
 ENTRY(phys_startup_32)
+#else
+OUTPUT_ARCH(i386:x86-64)
+ENTRY(phys_startup_64)
+#endif
 
 jiffies = jiffies_64;
 
 PHDRS {
 	text PT_LOAD FLAGS(5);          /* R_E */
 	data PT_LOAD FLAGS(6);          /* RW_ */
+#ifdef CONFIG_X86_64
+#ifdef CONFIG_SMP
+	percpu PT_LOAD FLAGS(6);        /* RW_ */
+#endif
+	init PT_LOAD FLAGS(7);          /* RWE */
+#endif
 	note PT_NOTE FLAGS(0);          /* ___ */
 }
 
 SECTIONS
 {
+#ifdef CONFIG_X86_32
 	. = LOAD_OFFSET + LOAD_PHYSICAL_ADDR;
 	phys_startup_32 = ABSOLUTE(startup_32 - LOAD_OFFSET);
+#else
+	. = __START_KERNEL;
+	phys_startup_64 = ABSOLUTE(startup_64 - LOAD_OFFSET);
+#endif
 	.text : AT(ADDR(.text) - LOAD_OFFSET) { 
 		_text = .;
 		_stext = .;

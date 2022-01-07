@@ -6,8 +6,10 @@ export BITS
 
 ifeq ($(CONFIG_X86_32),y)
 	BITS := 32
+	KCONFIG_CONFIG += -DCONFIG_X86_32
 else
 	BITS := 64
+	KCONFIG_CONFIG += -DCONFIG_X86_64
 endif
 
 boot := arch/x86/boot

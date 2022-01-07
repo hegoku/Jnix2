@@ -1,7 +1,17 @@
-ARCH = x86
+ARCH = i386
 MAKE = make
 
-export ARCH MAKE
+# Additional ARCH settings for x86
+ifeq ($(ARCH),i386)
+        SRCARCH := x86
+endif
+ifeq ($(ARCH),x86_64)
+        SRCARCH := x86
+endif
+
+KCONFIG_CONFIG :=
+
+export ARCH MAKE SRCARCH KCONFIG_CONFIG
 
 this-makefile := $(lastword $(MAKEFILE_LIST))
 abs_srctree := $(realpath $(dir $(this-makefile)))
@@ -14,7 +24,7 @@ output_dir = $(srctree)/build
 build := -f $(srctree)/Makefile.build output_dir="$(output_dir)" obj
 export build
 
-include $(srctree)/arch/$(ARCH)/Makefile
+include $(srctree)/arch/$(SRCARCH)/Makefile
 
 core-y += mm/ init/ lib/ kernel/ fs/
 core-obj := $(addsuffix /%.o,$(core-y))

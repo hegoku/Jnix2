@@ -12,8 +12,8 @@ build-in := $(wildcard $(output_dir)/*_build-in.o)
 $(output_dir)/kernel.bin : $(output_dir)/kernel.elf
 	$(OBJCOPY) -O binary $< $@
 
-$(output_dir)/kernel.elf : $(kernel-y) $(obj)/vmjnix.lds.S $(build-in)
-	$(LD) -T $(obj)/vmjnix.lds.S -m elf_i386 -o $@ $(kernel-y) $(build-in)
+$(output_dir)/kernel.elf : $(kernel-y) $(output_dir)/vmjnix.lds $(build-in)
+	$(LD) -T $(output_dir)/vmjnix.lds -m elf_i386 -o $@ $(kernel-y) $(build-in)
 
 #$(output_dir)/head_32.o : $(obj)/head_32.S
 #	$(CC) $(ASFLAGS) $< -o $@

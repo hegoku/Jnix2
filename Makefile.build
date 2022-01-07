@@ -1,9 +1,11 @@
 AS = i386-elf-as
 CC = i386-elf-gcc
+CPP = i386-elf-cpp
 LD = i386-elf-ld
 AR = i386-elf-ar
 OBJCOPY = i386-elf-objcopy
-KBUILD_CFLAGS = -c -nostdlib -fno-builtin -I ./include -I ./$(obj)/include -I ./$(obj)/../include -I ./arch/$(ARCH)/include
+KBUILD_INCLUDE := -I ./include -I ./$(obj)/include -I ./$(obj)/../include -I ./arch/$(SRCARCH)/include
+KBUILD_CFLAGS := -c -nostdlib -fno-builtin $(KBUILD_INCLUDE) $(KCONFIG_CONFIG)
 
 src = $(obj)
 slash_obj = $(subst /,_,$(obj))
@@ -53,6 +55,9 @@ $(output_dir)/%.so : $(obj)/%.S
 
 $(output_dir)/$(slash_obj)_%_build-in.o: 
 	for dir in $(subdir-ym); do $(MAKE) $(build)=$(slash_obj)/$$dir; done 
+
+$(output_dir)/%.lds : $(obj)/%.lds.S
+	$(CPP) $(KBUILD_INCLUDE) $(KCONFIG_CONFIG) -P -U$(ARCH) $< -o $@
 
 #include $(obj)/Makefile
 
